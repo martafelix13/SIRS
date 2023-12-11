@@ -1,22 +1,16 @@
-# CXX GrooveGalaxy / BombAppetit / BlingBank / MediTrack Project Read Me
-
-<!-- this is an instruction line; after you follow the instruction, delete the corresponding line. Do the same for all instruction lines! -->
-
-*(replace CXX above with group identifier, for example, A07 ou T22)*
-
-*(keep only your scenario name and delete the other names)*
+# A34 MediTrack Project Read Me
 
 ## Team
 
-| Number | Name              | User                             | E-mail                              |
-| -------|-------------------|----------------------------------| ------------------------------------|
-| 11111  | Alice Network     | <https://github.com/AliceUser>   | <mailto:alice@tecnico.ulisboa.pt>   |
-| 22222  | Bob Computer      | <https://github.com/BobUser>     | <mailto:bob@tecnico.ulisboa.pt>     |
-| 33333  | Charlie Security  | <https://github.com/CharlieUser> | <mailto:charlie@tecnico.ulisboa.pt> |
+| Number | Name                | User                                | E-mail                                     |
+| -------|---------------------|-------------------------------------| -------------------------------------------|
+| 99276  | Marta Félix         | <https://github.com/martafelix13>   | <marta.felix@tecnico.ulisboa.pt>           |
+| 110859 | Luis Marques        | <https://github.com/>               | <luis.caramelo.marques@tecnico.ulisboa.pt> |
+| 99221  | Francisco Gil Mata  | <https://github.com/franciscogmata> | <francisco.gil.mata@tecnico.ulisboa.pt>    |  
 
 *(fill table above with team member information)*  
 
-![Alice](img/alice.png) ![Bob](img/bob.png) ![Charlie](img/charlie.png)
+![Marta Félix](img/MartaFélix.jpeg) ![Luis Marques](img/LuisMarques.jpeg) ![Francisco Gil Mata](img/FranciscoGilMata.jpeg)
 
 *(add face photos with 150px height; faces should have similar size and framing)*
 
@@ -55,10 +49,8 @@ For each machine, there is an initialization script with the machine name, with 
 Inside each machine, use Git to obtain a copy of all the scripts and code.
 
 ```sh
-$ git clone https://github.com/tecnico-sec/cxx...
+$ git clone https://github.com/tecnico-sec/a34-francisco-marta-luis.git
 ```
-
-*(above, replace with link to actual repository)*
 
 Next we have custom instructions for each machine.
 

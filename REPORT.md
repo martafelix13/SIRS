@@ -1,10 +1,9 @@
-# CXX GrooveGalaxy / BombAppetit / BlingBank / MediTrack Project Report
+# A34 MediTrack Project Report
 
 ## 1. Introduction
 
-(_Provide a brief overview of your project, including the business scenario and the main components: secure documents, infrastructure, and security challenge._)
+In response to the growing need for enhanced security in managing patient data within Portugal's healthcare institutions, our project focuses on fortifying the MediTrack Electronic Health Records (EHR) system. The primary components of our project include the development of a secure document format, the establishment of a robust infrastructure, and addressing specific security challenges inherent in healthcare data management.
 
-(_Include a structural diagram, in UML or other standard notation._)
 
 ## 2. Project Development
 
@@ -12,15 +11,62 @@
 
 #### 2.1.1. Design
 
-(_Outline the design of your custom cryptographic library and the rationale behind your design choices, focusing on how it addresses the specific needs of your chosen business scenario._)
+Our custom cryptographic library, implemented in Java using the Java Cryptography Architecture (JCA), is meticulously designed to uphold the authenticity and confidentiality of patient data within the MediTrack EHR system. The following is an illustrative example of our data format, showcasing the designed protections.
 
-(_Include a complete example of your data format, with the designed protections._)
+{
+  "patient": {
+    "name": "Bob",
+    "sex": "Male",
+    "dateOfBirth": "2004-05-15",
+    "bloodType": "A+",
+    "knownAllergies": ["Penicillin"],
+    "consultationRecords": [
+      {
+        "date": "2022-05-15",
+        "medicalSpeciality": "Orthopedic",
+        "doctorName": "Dr. Smith",
+        "practice": "OrthoCare Clinic",
+        "treatmentSummary": "Fractured left tibia; cast applied."
+        "access": ["Dr. Smith"]
+      },
+      {
+        "date": "2023-04-20",
+        "medicalSpeciality": "Gastroenterology",
+        "doctorName": "Dr. Johnson",
+        "practice": "Digestive Health Center",
+        "treatmentSummary": "Diagnosed with gastritis; prescribed antacids."
+        "access":["Dr. Smith"]
+      },
+      {
+        "date": "2023-09-05",
+        "medicalSpeciality": "Dermatology",
+        "doctorName": "Dr. Martins",
+        "practice": "SkinCare Clinic",
+        "treatmentSummary": "Treated for Molluscum Contagiosum; prescribed topical corticosteroids."
+        "access":["Dr. Smith"]
+      }
+    ]
+  },
+  "authenticity": "digital_signature_here",
+  "freshness": "encrypted_data_here"
+}
+
+authenticity: Digital signatures guarantee the origin and integrity of patient data.
+freshness: Assures the data freshness
+
+
+Document should always be a valid json
 
 #### 2.1.2. Implementation
 
-(_Detail the implementation process, including the programming language and cryptographic libraries used._)
+The implementation of our custom cryptographic library was carried out in Java, utilizing the Java Cryptography Architecture (JCA) for encryption and digital signature operations.
 
-(_Include challenges faced and how they were overcome._)
+Digital Signature (Authenticity): Utilized JCA for asymmetric cryptography, generating and verifying digital signatures with a securely held private key and shared public key for users.
+
+Encryption (Confidentiality): Leveraged JCA to apply the Advanced Encryption Standard (AES) for symmetric encryption, establishing a shared secret key through a secure key exchange mechanism.
+
+Freshness-Token: Timestamp and counter methods .
+
 
 ### 2.2. Infrastructure
 
