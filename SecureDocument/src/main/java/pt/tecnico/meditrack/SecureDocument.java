@@ -1,3 +1,5 @@
+package pt.tecnico.meditrack;
+
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -270,7 +272,7 @@ public class SecureDocument {
 		writeFile(output_filename, contentDecoded);
     }
 
-    public void help(){
+    public static void help(){
 
         System.out.println(String.format("help:    display information on the available commands"));
         System.out.println(String.format("protect (input-file) (output-file): adds security to the input file"));
@@ -278,5 +280,39 @@ public class SecureDocument {
         System.out.println(String.format("unprotect (input-file) (output-file): removes the security to the input file"));
 
     }
+
+	public static void main(String args[]) throws Exception{
+		// command input_filename <output_filename>
+		String command = "";
+		if (args.length > 1) {
+			command = args[0];
+		} else {
+			return;
+		}
+
+		while(command != "exit") {
+			switch (command) {
+				case "help":
+					help();
+					break;
+				
+				case "protect":
+					if (args.length < 3) {
+						return;
+					}
+					protect(args[1], args[2]);
+					break;
+				
+				case "unprotect":
+					if (args.length < 3) {
+						return;
+					}
+					unprotected(args[1], args[2]);
+					break;
+
+			}
+		}
+		return;
+	}
 }
 

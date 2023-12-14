@@ -4,7 +4,7 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/ma
 <modelVersion>4.0.0</modelVersion>
 <!--  http://maven.apache.org/pom.html#Quick_Overview  -->
 <groupId>pt.tecnico.sirs.a34</groupId>
-<artifactId>MeditrackServer</artifactId>
+<artifactId>Database</artifactId>
 <version>1.0.0-SNAPSHOT</version>
 <packaging>jar</packaging>
 <name>${project.artifactId}</name>
@@ -22,13 +22,26 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/ma
     <gson.version>2.10.1</gson.version>
     <!--  application properties - can be overriden in command line with -D  -->
     <p>pt.tecnico.meditrack</p>
-    <c>MeditrackServer</c>
+    <c>Database</c>
     <mainclass>${p}.${c}</mainclass>
     <!--  arguments are defined in exec plugin  -->
 </properties>
 <dependencies>
-    <!--  https://mvnrepository.com/artifact/javax.annotation/javax.annotation-api
-		explicitly required since Java 9  -->
+    <dependency>
+        <groupId>org.xerial</groupId>
+        <artifactId>sqlite-jdbc</artifactId>
+        <version>3.36.0.3</version> <!-- Check for the latest version on Maven Central -->
+    </dependency>
+    <dependency>
+        <groupId>log4j</groupId>
+        <artifactId>log4j</artifactId>
+        <version>1.2.17</version>
+    </dependency>
+    <dependency>
+        <groupId>com.google.code.gson</groupId>
+        <artifactId>gson</artifactId>
+        <version>${gson.version}</version>
+    </dependency>
 </dependencies>
 <build>
     <plugins>
@@ -83,8 +96,8 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/ma
             <configuration>
                 <programs>
                     <program>
-                        <mainClass>pt.tecnico.meditrack.MeditrakServer</mainClass>
-                        <id>meditrack_server</id>
+                        <mainClass>pt.tecnico.meditrack.Database</mainClass>
+                        <id>database</id>
                     </program>
                 </programs>
             </configuration>

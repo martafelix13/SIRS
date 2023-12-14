@@ -14,7 +14,8 @@
         builds the selected projects in order. -->
     <modules>
         <module>SecureDocument</module>
-        <module>MeditrackServer</module>
+        <module>ApiMeditrack</module>
+        <module>Database</module>
         <module>MeditrackUser</module>
     </modules>
 

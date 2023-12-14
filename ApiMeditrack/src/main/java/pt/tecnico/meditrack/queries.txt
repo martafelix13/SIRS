@@ -1,0 +1,37 @@
+patiente acede a toda a sua informação
+SELECT * FROM patients
+	JOIN consultations ON patients.name = consultations.patientName
+		WHERE patients.name = 'Bob';
+
+
+medico acede a toda a informacao sobre as suas consultas (default)
+SELECT * FROM consultations
+JOIN patients ON consultations.patientName = patients.name
+WHERE consultations.doctorName = 'Dr. Smith';
+
+
+medico acede a toda a informacao das consultas a que esta autorizado
+SELECT
+    patients.name AS patient_name,
+    patients.sex,
+    patients.dateOfBirth,
+    patients.bloodType,
+    patients.knownAllergies,
+    consultations.id AS consultation_id,
+    consultations.date,
+    consultations.medicalSpeciality,
+    consultations.doctorName,
+    consultations.practice,
+    consultations.treatmentSummary
+FROM
+    consultations
+JOIN
+    autorizations ON consultations.id = autorizations.consultationId
+JOIN
+    patients ON patients.name = consultations.patientName
+WHERE
+    autorizations.doctorName = 'Dr. Smith';
+
+
+
+User adiciona permissao para o medico ver determinada consulta
