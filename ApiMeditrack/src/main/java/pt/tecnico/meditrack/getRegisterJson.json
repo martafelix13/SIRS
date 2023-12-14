@@ -1,0 +1,5 @@
+{
+    "user": "patient",
+    "command": "getRegisters",
+    "payload": "{patientName:\"Bob\"}"
+}

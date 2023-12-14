@@ -1,0 +1,5 @@
+{
+    "user": "patient",
+    "command": "allowAccessToAllRegisters",
+    "payload": "{patientName:\"Bob\",doctorName:\"Dr.Smith\"}"
+}

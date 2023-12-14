@@ -30,7 +30,7 @@ CREATE TABLE autorizations (
     consultationId INT,
     doctorName VARCHAR(255),
     FOREIGN KEY (consultationId) REFERENCES consultations(id),
-    FOREIGN KEY (doctorName) REFERENCES doctorName(name)
+    FOREIGN KEY (doctorName) REFERENCES doctors(name)
 );
 
 

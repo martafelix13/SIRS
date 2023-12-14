@@ -1,12 +1,16 @@
 package pt.tecnico.meditrack;
 
 import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.Socket;
-
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -23,50 +27,53 @@ public class ApiMeditrack {
     private final static String DOCTOR = "doctor";
     private final static String SOS = "sos";
 
+    public static void main(String[] args) throws FileNotFoundException, IOException {
+
+        String filename = "src/main/java/pt/tecnico/meditrack/getRegisterJson.json";
+        //String filename = "src/main/java/pt/tecnico/meditrack/allowAccessToAllRegisters.json";
 
 
-    // USER COMMAND ARGS
-    public static void main(String[] args) {
+        JsonObject file = readJsonFile(filename);
+
+        String user = file.get("user").getAsString();
+        System.out.println("User from file: " + user);
 
         String query = "";
-        if (args[0] == PATIENT) {
+        if (user.equals(PATIENT)) {
 
-            String command = args[1];
+            String command = file.get("command").getAsString();
+            System.out.println("command from file: " + command);
+
 
             switch (command) {
                 case "getRegisters":
-                    query = "SELECT * FROM patients JOIN consultations ON patients.name = consultations.patientName WHERE patients.name = 'Bob';";
+                    JsonObject payload = JsonParser.parseString(file.get("payload").getAsString()).getAsJsonObject();
+                    String patient = payload.get("patientName").getAsString();
+                    System.out.println("patientName from file: " + patient);
+                    query = getPatientRegisters(patient);
+                    System.out.println("query: " + query);
                     break;
             
-                case "addAccessToAllRegisters":
-                    query = "INSERT INTO autorizations (consultationId, doctorName, patientName)\n" +
-                            "SELECT id, 'Dr. Smith', 'Bob'\n" +
-                            "FROM consultations\n" + 
-                            "WHERE patientName = 'Bob';";
+                case "allowAccessToAllRegisters":
+                    payload = JsonParser.parseString(file.get("payload").getAsString()).getAsJsonObject();
+                    patient = payload.get("patientName").getAsString();
+                    String doctor = payload.get("doctorName").getAsString();
+                    query = allowAccessToAllRegisters(patient, doctor);
+    
                     break;
                 
                 case "deletePersonalInformation":
-                    query = "DELETE FROM consultations WHERE patientName = 'John Doe'; DELETE FROM patients WHERE name = 'John Doe';";
+                    payload = JsonParser.parseString(file.get("payload").getAsString()).getAsJsonObject();
+                    patient = payload.get("patientName").getAsString();
+                    query = deletePersonalInformation(patient);
             }
         }
 
-        if (args[0] == DOCTOR) {
+         if (user.equals(DOCTOR)) {
 
-            String command = args[1];
+/*             String command = args[1];
 
             switch (command) {
-                case "getConsultations":
-                    query = "SELECT \n" +
-                                "patients.name AS patient_name, \n" +
-                                "consultations.id AS consultation_id,\n" +
-                                "consultations.date,\n" +
-                                "consultations.medicalSpeciality,\n" +
-                                "consultations.doctorName,\n" +
-                                "consultations.practice,\n" +
-                                "consultations.treatmentSummary FROM consultations\n" +
-                                "JOIN patients ON consultations.patientName = patients.name\n" +
-                                "WHERE consultations.doctorName = 'Dr. Smith';\n";
-                    break;
             
                 case "getPatientsConsultations":
                     query = "SELECT patients.name AS patient_name, consultations.id AS consultation_id, consultations.date, consultations.medicalSpeciality, consultations.doctorName, consultations.practice, consultations.treatmentSummary FROM consultations JOIN autorizations ON consultations.id = autorizations.consultationId JOIN patients ON consultations.patientName = patients.name WHERE autorizations.doctorName = 'Dr. Smith' AND patients.name = 'Bob';";
@@ -74,7 +81,11 @@ public class ApiMeditrack {
                 
                 case "addConsultation":
                     query = "INSERT INTO consultations (patientName, date, medicalSpeciality, doctorName, practice, treatmentSummary) VALUES ('Bob', '2023-12-31', 'Cardiology', 'Dr. Smith', 'Cardiology Clinic', 'Initial consultation for Bob by Dr. Smith');";
-            }
+                    break;
+                }
+
+                case "changeMedicalSpeciality": */
+
         }
         
 
@@ -86,13 +97,10 @@ public class ApiMeditrack {
 
             JsonObject requestJson = new JsonObject();
   
-            // Query to be executed
-            requestJson.addProperty("value", "SELECT * FROM patients;");
+            requestJson.addProperty("value", query);
 
-            // Send a message to the server
             out.println(requestJson.toString());
 
-            // Read the response from the server
             String serverResponse = in.readLine();
             System.out.println("Received from server: " + serverResponse.toString());
 
@@ -100,4 +108,36 @@ public class ApiMeditrack {
             e.printStackTrace();
         }
     }
+
+    private static JsonObject readJsonFile(String filename) throws FileNotFoundException, IOException{
+		try (FileReader fileReader = new FileReader(filename)) {
+            Gson gson = new Gson();
+            JsonObject rootJson = gson.fromJson(fileReader, JsonObject.class);
+
+			return rootJson;
+        }
+	}	
+
+
+    private static String getPatientRegisters(String name) {
+
+        return "SELECT * FROM patients " + 
+                "JOIN consultations ON patients.name = consultations.patientName " + 
+                    "WHERE patients.name = '" + name + "';";
+    }
+
+    private static String allowAccessToAllRegisters(String patient, String doctor) {
+
+        return "INSERT INTO autorizations (consultationId, doctorName)" +
+                " SELECT id, '" + doctor + "' " +
+                    " FROM consultations"  +
+                        " WHERE patientName = '"+ patient + "';";
+    }
+
+    private static String deletePersonalInformation(String patient) {
+
+        return "DELETE FROM consultations WHERE patientName = '" + patient + "'; " + 
+            "DELETE FROM patients WHERE name = '" + patient + "';";
+    }
+
 }

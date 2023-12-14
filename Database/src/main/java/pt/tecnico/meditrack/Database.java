@@ -7,6 +7,8 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -26,6 +28,9 @@ public class Database {
 
     public static void main(String[] args) throws IOException{
 
+        System.out.println(System.getProperty("user.dir"));
+
+
             try (ServerSocket serverSocket = new ServerSocket(PORT)) {
                 System.out.println("Server is listening on port " + PORT);
     
@@ -40,7 +45,22 @@ public class Database {
                     
                     JsonObject clientJson = JsonParser.parseString(clientMessage).getAsJsonObject();
                     String query = clientJson.get("value").getAsString();
-                    JsonObject data = getData(query);
+
+                    JsonObject data = new JsonObject();
+
+                    if (getMethod(query).equals("UPDATE") || getMethod(query).equals("DELETE") || getMethod(query).equals("INSERT")) {
+                        int response = updateData(query);
+                        if (response != -1) {
+                            System.out.println("Operation was sucessfull.");
+                            data.addProperty("state", "successful");
+                        } else {
+                            System.out.println("Operation failed.");
+                            data.addProperty("state", "failed");
+                        }
+                    } else {
+                        data = getData(query);
+
+                    }
 
                     // Send a response to the client
                     BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(clientSocket.getOutputStream()));
@@ -53,6 +73,17 @@ public class Database {
             } catch (IOException e) {
                 e.printStackTrace();
             }
+    }
+
+    private static String getMethod(String input) {
+        String trimmedInput = input.trim();
+        String[] words = trimmedInput.split("\\s+");
+
+        if (words.length > 0) {
+            return words[0];
+        } else {
+            return "";
+        }
     }
 
 
@@ -68,18 +99,38 @@ public class Database {
             System.out.println("Query received: " + query);
             ResultSet resultSet = statement.executeQuery(query);
 
-            for (int i = 2; i <= resultSet.getMetaData().getColumnCount(); i++) {
-                String columnName = resultSet.getMetaData().getColumnName(i);
-                Object columnValue = resultSet.getObject(i);
-                System.out.println(columnName + ':' + columnValue);
-                data.addProperty(columnName, columnValue.toString());
-            }
+            do {
+                for (int i = 2; i <= resultSet.getMetaData().getColumnCount(); i++) {
+                    String columnName = resultSet.getMetaData().getColumnName(i);
+                    Object columnValue = resultSet.getObject(i);
+                    System.out.println(columnName + ':' + columnValue);
+                    data.addProperty(columnName, columnValue.toString());
+                }
+            } while (resultSet.next());
 
 
         } catch (Exception e) {
             e.printStackTrace();
         }
         return data;
+    }
+
+
+    public static int updateData(String query) throws IOException {
+        String jdbcUrl = "jdbc:sqlite:src/main/java/pt/tecnico/meditrack/meditrack.db";
+    
+        try (Connection connection = DriverManager.getConnection(jdbcUrl);
+             Statement statement = connection.createStatement()) {
+    
+            System.out.println("Query received: " + query);
+            int rowsAffected = statement.executeUpdate(query);
+            System.out.println("Rows affected: " + rowsAffected);
+            return rowsAffected;
+    
+        } catch (Exception e) {
+            e.printStackTrace();
+            return -1; // or handle the error in an appropriate way
+        }
     }
 
 }
