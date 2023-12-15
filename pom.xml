@@ -17,6 +17,7 @@
         <module>ApiMeditrack</module>
         <module>Database</module>
         <module>MeditrackUser</module>
+        <module>Client</module>
     </modules>
 
 </project>
