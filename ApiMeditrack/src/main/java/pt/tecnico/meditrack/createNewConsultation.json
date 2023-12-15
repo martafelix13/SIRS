@@ -1,0 +1,5 @@
+{
+    "user": "doctor",
+    "command": "createConsultation",
+    "payload" : "{\"patientName\":\"Bob\",\"date\":\"14-12-2023\",\"doctorName\":\"Dr.Smith\",\"medicalSpeciality\":\"Dermatology\",\"pratice\":\"Privateconsultationathome\",\"treatmentSummary\":\"Startacnetreatment\"}"
+}

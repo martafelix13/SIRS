@@ -1,0 +1,5 @@
+{
+    "user": "doctor",
+    "command": "getPatientsConsultations",
+    "payload": "{patientName:\"Bob\",doctorName:\"Dr.Smith\"}"
+}
