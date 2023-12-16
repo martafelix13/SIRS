@@ -12,12 +12,20 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Scanner;
+import javax.net.ssl.HttpsURLConnection;
 public class Client {
-    private static final String API_URL = "https://localhost:5555";
+    private static final String API_URL = "https://localhost:5555/api";
 
     public static void main(String[] args) {
+
+        System.setProperty("javax.net.ssl.keyStore", "certificates/client.p12");
+        System.setProperty("javax.net.ssl.keyStorePassword", "changeme");
+        System.setProperty("javax.net.ssl.trustStore", "certificates/clienttruststore.jks");
+        System.setProperty("javax.net.ssl.trustStorePassword", "changeme");
+    
         
         Scanner scanner = new Scanner(System.in);
+        HttpsURLConnection.setDefaultHostnameVerifier((hostname, session) -> true);
 
         while (true) {
             printMenu();
@@ -33,6 +41,7 @@ public class Client {
                                 System.out.println("Enter patient name: ");
                                 String patientName = scanner.next();
                                 sendClientRequest(patientName);
+                                
                                 break;
                             case 2:
                                 System.out.println("Give Doctor Access");
@@ -74,7 +83,7 @@ public class Client {
                 default:
                     System.out.println("Invalid choice. Please try again.");
             }
-        }
+        } 
     }
 
 
@@ -120,8 +129,6 @@ public class Client {
     //////////////// JSON Requests ////////////////
 
 
-
-
     private static void sendClientRequest(String patientName) {
         // Construct your JSON request payload
         JsonObject jsonPayload = new JsonObject();
@@ -159,7 +166,7 @@ public class Client {
     private static void sendJsonRequest(String jsonRequest) {
         try {
             URL url = new URL(API_URL);
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
 
             // Set up the HTTP request
             connection.setRequestMethod("POST");

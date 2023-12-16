@@ -14,6 +14,8 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -25,9 +27,26 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpHandler;
+import com.sun.net.httpserver.HttpsServer;
+
 import javax.net.SocketFactory;
-import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
+import javax.sound.sampled.Port;
+import javax.net.ssl.*;
+
+import java.io.FileInputStream;
+import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
+import com.sun.net.httpserver.HttpServer;
+import com.sun.net.httpserver.HttpsConfigurator;
+import com.sun.net.httpserver.HttpsParameters;
+import com.sun.net.httpserver.Headers;
+
 
 
 public class ApiMeditrack {
@@ -39,7 +58,85 @@ public class ApiMeditrack {
     private final static String DOCTOR = "doctor";
     private final static String SOS = "sos";
 
-    public static void main(String[] args) throws FileNotFoundException, IOException {
+    public static void main(String[] args) throws FileNotFoundException, IOException, NoSuchAlgorithmException, KeyStoreException, CertificateException, UnrecoverableKeyException, KeyManagementException {
+
+        try {
+            // Specify the keystore and truststore file paths and passwords
+            String keystoreFilePath = "certificates/server.p12";
+            String keystorePassword = "changeme";
+            String truststoreFilePath = "certificates/servertruststore.jks";
+            String truststorePassword = "changeme";
+
+            // Load the keystore
+            char[] keystorePasswordChars = keystorePassword.toCharArray();
+            KeyStore keyStore = KeyStore.getInstance("PKCS12");
+            keyStore.load(new FileInputStream(keystoreFilePath), keystorePasswordChars);
+
+            // Load the truststore
+            char[] truststorePasswordChars = truststorePassword.toCharArray();
+            KeyStore trustStore = KeyStore.getInstance("JKS");
+            trustStore.load(new FileInputStream(truststoreFilePath), truststorePasswordChars);
+            
+
+
+            // Initialize the key manager factory
+            KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+            keyManagerFactory.init(keyStore, keystorePasswordChars);
+
+            // Initialize the trust manager factory
+            TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            trustManagerFactory.init(trustStore);
+
+            // Initialize the SSL context
+            SSLContext sslContext = SSLContext.getInstance("TLS");
+            sslContext.init(keyManagerFactory.getKeyManagers(), trustManagerFactory.getTrustManagers(), null);
+
+            // Create the HTTPS server
+            HttpsServer httpsServer = HttpsServer.create(new InetSocketAddress(PORT), 0);
+            httpsServer.setHttpsConfigurator(new HttpsConfigurator(sslContext));
+
+            // Create a simple context to handle requests
+            httpsServer.createContext("/api", exchange -> {
+                // Handle the incoming request at the "/api" endpoint
+                
+                // notifica que o servidor recebeu um pedido
+                System.out.println("Received connection from: " + exchange.getRemoteAddress());
+                // Read the request method (e.g., POST)
+                String requestMethod = exchange.getRequestMethod();
+                
+                // Read the request headers (e.g., Content-Type)
+                Headers requestHeaders = exchange.getRequestHeaders();
+                
+                // Get the request input stream to read the request body
+                try (InputStream requestBody = exchange.getRequestBody()) {
+                    // Read the JSON payload from the input stream
+                    String jsonRequest = new String(requestBody.readAllBytes(), StandardCharsets.UTF_8);
+                    
+                    // Handle the JSON payload (you can process or save it as needed)
+                    System.out.println("Received JSON request: " + jsonRequest);
+                    
+                    // Send a response back to the client
+                    String response = "Received and processed the JSON request!";
+                    exchange.sendResponseHeaders(200, response.length());
+                    try (OutputStream os = exchange.getResponseBody()) {
+                        os.write(response.getBytes(StandardCharsets.UTF_8));
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            });
+
+            // Start the server
+            httpsServer.start();
+
+            System.out.println("Server is running on port " + PORT + "...");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    
+        /* 
+        /** SECURE SOCKETS  */
+        /*
         configSecureSockets();
 
         JsonObject file = readRequestFromClient();
@@ -115,6 +212,8 @@ public class ApiMeditrack {
         }
 
         
+
+        
         SocketFactory factory = SSLSocketFactory.getDefault();
         try (SSLSocket socket = (SSLSocket) factory.createSocket(ADDRESS, PORT)) {
 
@@ -139,6 +238,45 @@ public class ApiMeditrack {
             System.out.println(i);
             return;
         }
+        
+        */
+    }
+    
+
+    static class ApiHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            System.out.println("Received connection from: " + exchange.getRemoteAddress());
+
+            // Handle incoming HTTP request
+            String requestMethod = exchange.getRequestMethod();
+            if (requestMethod.equalsIgnoreCase("POST")) {
+                // Read the JSON request from the input stream
+                String requestBody = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+
+                // Parse the JSON request
+                JsonObject jsonRequest = JsonParser.parseString(requestBody).getAsJsonObject();
+
+                // Process the JSON request
+                String response = processJsonRequest(jsonRequest);
+
+                // Send the JSON response
+                exchange.sendResponseHeaders(200, response.length());
+                try (OutputStream os = exchange.getResponseBody()) {
+                    os.write(response.getBytes(StandardCharsets.UTF_8));
+                }
+            } else {
+                // Respond with a 405 Method Not Allowed for non-POST requests
+                exchange.sendResponseHeaders(405, -1);
+            }
+        }
+    }   
+
+    private static String processJsonRequest(JsonObject jsonRequest) {
+        //Print the request
+        System.out.println("Received request: " + jsonRequest.toString());
+        return "OK";
+        
     }
 
     private static void configSecureSockets(){
@@ -162,6 +300,8 @@ public class ApiMeditrack {
 			return rootJson;
         }
 	}	
+
+    
 
 
     private static String getPatientRegisters(String name) {
