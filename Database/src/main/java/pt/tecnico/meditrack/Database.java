@@ -34,7 +34,7 @@ import javax.net.ssl.SSLServerSocketFactory;
 
 public class Database {
 
-    private final static int PORT = 5555;
+    private final static int PORT = 3306;
 
     public static void main(String args[]) throws IOException {
         System.setProperty("javax.net.ssl.keyStore", "certificates/database.p12");
@@ -52,44 +52,43 @@ public class Database {
             listener.setEnabledCipherSuites(new String[] { "TLS_AES_128_GCM_SHA256" });
             listener.setEnabledProtocols(new String[] { "TLSv1.3" });
             System.out.println("listening for messages on port " + PORT);
-            InputStream is = null;
-            OutputStream os = null;
-            try (Socket socket = listener.accept()) {
-                while (true) {
-                    try {
-                        int len = -1;
-                        byte[] data = new byte[2048];
-                        while (len == -1 ) {
-                            is = new BufferedInputStream(socket.getInputStream());
-                            len = is.read(data);
-                        }
 
-                        String message = new String(data, 0, len);
-                        System.out.printf("server received %d bytes: %s%n", len, message);
-
-                        JsonObject clientJson = JsonParser.parseString(message).getAsJsonObject();
-                        String query = clientJson.get("value").getAsString();
-
-                        String response = handleQuery(query);
-                        System.out.println("response: " + response);
-
-                        os = new BufferedOutputStream(socket.getOutputStream());
-                        os.write(response.getBytes(), 0, response.getBytes().length);
-                        os.flush();
-                        
-
-                    } catch (IOException i) {
-                        System.out.println(i);
-                        return;
-                    }
+            while (true) {
+                try (Socket socket = listener.accept()) {
+                    System.out.println("Connected");
+                    handleConnection(socket);
+                } catch (IOException e) {
+                    System.out.println("Error accepting connection: " + e.getMessage());
                 }
-            } catch (IOException i) {
-                System.out.println(i);
-                return;
             }
+        } catch (IOException e) {
+            System.out.println("Error creating server socket: " + e.getMessage());
         }
     }
 
+
+    private static void handleConnection(Socket socket) {
+        try (InputStream is = new BufferedInputStream(socket.getInputStream());
+             OutputStream os = new BufferedOutputStream(socket.getOutputStream())) {
+            int len = -1;
+            byte[] data = new byte[2048];
+            while (len == -1) { len = is.read(data);}
+
+            String message = new String(data, 0, len);
+            System.out.printf("server received %d bytes: %s%n", len, message);
+
+            JsonObject clientJson = JsonParser.parseString(message).getAsJsonObject();
+            String query = clientJson.get("value").getAsString();
+
+            String response = handleQuery(query);
+            System.out.println("response: " + response);
+
+            os.write(response.getBytes(), 0, response.getBytes().length);
+            os.flush();
+        } catch (IOException e) {
+            System.out.println("Error handling connection: " + e.getMessage());
+        }
+    }
     
 
     private static String getMethod(String input) {

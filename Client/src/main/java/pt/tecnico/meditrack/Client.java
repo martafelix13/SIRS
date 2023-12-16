@@ -14,7 +14,7 @@ import java.net.URL;
 import java.util.Scanner;
 import javax.net.ssl.HttpsURLConnection;
 public class Client {
-    private static final String API_URL = "https://localhost:5555/api";
+    private static final String API_URL = "https://localhost:433/api";
 
     public static void main(String[] args) {
 
@@ -40,15 +40,26 @@ public class Client {
                             case 1:
                                 System.out.println("Enter patient name: ");
                                 String patientName = scanner.next();
-                                sendClientRequest(patientName);
+                                sendClientViewRequest(patientName);
                                 
                                 break;
                             case 2:
-                                System.out.println("Give Doctor Access");
+                                System.out.println("Enter patient name: ");
+                                String patientName1 = scanner.next();
+                                System.out.println("Enter doctor name: ");
+                                String doctorName = scanner.next();
+                                sendClientGiveDoctorAccessRequest(patientName1, doctorName);
                                 break;
+
                             case 3:
+                                System.out.println("Enter patient name: ");
+                                String patientName2 = scanner.next();
+                                sendClientDeleteRequest(patientName2);
+                                break;
+                            case 4:
                                 System.out.println("Exiting to the main menu.");
                                 break;
+                            
                                 
                             default:
                                 System.out.println("Invalid choice. Please try again.");
@@ -63,10 +74,33 @@ public class Client {
                         int doctorChoice = getUserChoice(scanner);
                         switch (doctorChoice) {
                             case 1:
-                                System.out.println("View Patient History");
+                                System.out.println("Enter doctor name: ");
+                                String doctorName = scanner.next();
+                                System.out.println("Enter patient name: ");
+                                String patientName = scanner.next();
+                                sendDoctorViewRequest(doctorName, patientName);
                                 break;
                             case 2:
-                                System.out.println("Exiting to the main menu.");
+                                System.out.println("Enter doctor name: ");
+                                String doctorName1 = scanner.next();
+                                System.out.println("Enter patient name: ");
+                                String patientName1 = scanner.next();
+                                System.out.println("Enter date: ");
+                                String date = scanner.next();
+                                System.out.println("Enter speciality: ");
+                                String speciality = scanner.next();
+                                System.out.println("Enter practice: ");
+                                String practice = scanner.next();
+                                System.out.println("Enter Treatment Summary: ");
+                                String treatmentSummary = scanner.next();
+                                sendDoctorCreateConsultationRequest(doctorName1, patientName1, date, speciality, practice, treatmentSummary);
+                                break;
+                            case 3:
+                                System.out.println("Enter doctor name: ");
+                                String doctorName2 = scanner.next();
+                                System.out.println("Enter new speciality: ");
+                                String newSpeciality = scanner.next();
+                                sendDoctorChangeSpecialityRequest(doctorName2, newSpeciality);
                                 break;
                             default:
                                 System.out.println("Invalid choice. Please try again.");
@@ -102,7 +136,8 @@ public class Client {
         System.out.println("===== Client Menu =====");
         System.out.println("1. View Patient History");
         System.out.println("2. Give Doctor Access");
-        System.out.println("3. Exit");
+        System.out.println("3. Delete Personal Information");
+        System.out.println("4. Exit");
         System.out.println("=================");
        
     }
@@ -110,7 +145,9 @@ public class Client {
     private static void printDoctorMenu() {
         System.out.println("===== Doctor Menu =====");
         System.out.println("1. View Patient History");
-        System.out.println("2. Exit");
+        System.out.println("2. Create Consultation");
+        System.out.println("3. Change Speciality");
+        System.out.println("4. Exit");
         System.out.println("=================");
        
     }
@@ -129,7 +166,7 @@ public class Client {
     //////////////// JSON Requests ////////////////
 
 
-    private static void sendClientRequest(String patientName) {
+    private static void sendClientViewRequest(String patientName) {
         // Construct your JSON request payload
         JsonObject jsonPayload = new JsonObject();
         jsonPayload.addProperty("user", "patient");
@@ -150,11 +187,66 @@ public class Client {
 
         // Add more logic here based on the server's response
     }
+
+    private static void sendClientGiveDoctorAccessRequest(String patientName, String doctorName) {
+        // Construct your JSON request payload
+        JsonObject jsonPayload = new JsonObject();
+        jsonPayload.addProperty("user", "patient");
+        jsonPayload.addProperty("command", "allowAccessToAllRegisters");
+
+        // Create a nested JSON object for the payload
+        JsonObject payload = new JsonObject();
+        payload.addProperty("patientName", patientName);
+        payload.addProperty("doctorName", doctorName);
+
+        // Convert the payload to a JSON string and add it to the main JSON object
+        jsonPayload.addProperty("payload", payload.toString());
+
+        // Convert the main JSON object to a string
+        String jsonRequest = jsonPayload.toString();
+
+        // Send the JSON request to the server
+        sendJsonRequest(jsonRequest);
+
+    }
+
+    private static void sendClientDeleteRequest(String patientName) {
+        // Construct your JSON request payload
+        JsonObject jsonPayload = new JsonObject();
+        jsonPayload.addProperty("user", "patient");
+        jsonPayload.addProperty("command", "deletePersonalInformation");
+
+        // Create a nested JSON object for the payload
+        JsonObject payload = new JsonObject();
+        payload.addProperty("patientName", patientName);
+
+        // Convert the payload to a JSON string and add it to the main JSON object
+        jsonPayload.addProperty("payload", payload.toString());
+
+        // Convert the main JSON object to a string
+        String jsonRequest = jsonPayload.toString();
+
+        // Send the JSON request to the server
+        sendJsonRequest(jsonRequest);
+    }
     
 
-    private static void sendDoctorRequest() {
+    private static void sendDoctorViewRequest(String doctorName, String patientName) {
         // Construct your JSON request payload
-        String jsonRequest = "{\"action\":\"viewPatientHistory\"}";
+        JsonObject jsonPayload = new JsonObject();
+        jsonPayload.addProperty("user", "doctor");
+        jsonPayload.addProperty("command", "getPatientsConsultations");
+
+        // Create a nested JSON object for the payload
+        JsonObject payload = new JsonObject();
+        payload.addProperty("doctorName", doctorName);
+        payload.addProperty("patientName", patientName);
+
+        // Convert the payload to a JSON string and add it to the main JSON object
+        jsonPayload.addProperty("payload", payload.toString());
+
+        // Convert the main JSON object to a string
+        String jsonRequest = jsonPayload.toString();
 
         // Send the JSON request to the server
         sendJsonRequest(jsonRequest);
@@ -162,6 +254,51 @@ public class Client {
         // Add more logic here based on the server's response
     }
 
+    private static void sendDoctorCreateConsultationRequest(String doctorName, String patientName, String date, String speciality, String practice, String treatmentSummary) {
+        // Construct your JSON request payload
+        JsonObject jsonPayload = new JsonObject();
+        jsonPayload.addProperty("user", "doctor");
+        jsonPayload.addProperty("command", "createConsultation");
+
+        // Create a nested JSON object for the payload
+        JsonObject payload = new JsonObject();
+        payload.addProperty("doctorName", doctorName);
+        payload.addProperty("patientName", patientName);
+        payload.addProperty("date", date);
+        payload.addProperty("speciality", speciality);
+        payload.addProperty("practice", practice);
+        payload.addProperty("treatmentSummary", treatmentSummary);
+
+        // Convert the payload to a JSON string and add it to the main JSON object
+        jsonPayload.addProperty("payload", payload.toString());
+
+        // Convert the main JSON object to a string
+        String jsonRequest = jsonPayload.toString();
+
+        // Send the JSON request to the server
+        sendJsonRequest(jsonRequest);
+    }
+
+    private static void sendDoctorChangeSpecialityRequest(String doctorName, String newSpeciality) {
+        // Construct your JSON request payload
+        JsonObject jsonPayload = new JsonObject();
+        jsonPayload.addProperty("user", "doctor");
+        jsonPayload.addProperty("command", "changeSpeciality");
+
+        // Create a nested JSON object for the payload
+        JsonObject payload = new JsonObject();
+        payload.addProperty("doctorName", doctorName);
+        payload.addProperty("newSpeciality", newSpeciality);
+
+        // Convert the payload to a JSON string and add it to the main JSON object
+        jsonPayload.addProperty("payload", payload.toString());
+
+        // Convert the main JSON object to a string
+        String jsonRequest = jsonPayload.toString();
+
+        // Send the JSON request to the server
+        sendJsonRequest(jsonRequest);
+    }
 
     private static void sendJsonRequest(String jsonRequest) {
         try {

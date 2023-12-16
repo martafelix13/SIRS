@@ -51,7 +51,9 @@ import com.sun.net.httpserver.Headers;
 
 public class ApiMeditrack {
 
-    private final static int PORT = 5555;
+    private final static int PORT = 3306;
+    private final static int PORT_HTTPS = 433;
+
     private final static String ADDRESS = "localhost";
 
     private final static String PATIENT = "patient";
@@ -92,7 +94,7 @@ public class ApiMeditrack {
             sslContext.init(keyManagerFactory.getKeyManagers(), trustManagerFactory.getTrustManagers(), null);
 
             // Create the HTTPS server
-            HttpsServer httpsServer = HttpsServer.create(new InetSocketAddress(PORT), 0);
+            HttpsServer httpsServer = HttpsServer.create(new InetSocketAddress(PORT_HTTPS), 0);
             httpsServer.setHttpsConfigurator(new HttpsConfigurator(sslContext));
 
             // Create a simple context to handle requests
@@ -108,15 +110,17 @@ public class ApiMeditrack {
                 Headers requestHeaders = exchange.getRequestHeaders();
                 
                 // Get the request input stream to read the request body
-                try (InputStream requestBody = exchange.getRequestBody()) {
+                try (InputStream request = exchange.getRequestBody()) {
                     // Read the JSON payload from the input stream
-                    String jsonRequest = new String(requestBody.readAllBytes(), StandardCharsets.UTF_8);
+                    String requestBody = new String(request.readAllBytes(), StandardCharsets.UTF_8);
                     
                     // Handle the JSON payload (you can process or save it as needed)
-                    System.out.println("Received JSON request: " + jsonRequest);
+                    System.out.println("Received JSON request: " + requestBody);
+                    JsonObject jsonRequest = JsonParser.parseString(requestBody).getAsJsonObject();
+
+                    String response = processJsonRequest(jsonRequest);
                     
                     // Send a response back to the client
-                    String response = "Received and processed the JSON request!";
                     exchange.sendResponseHeaders(200, response.length());
                     try (OutputStream os = exchange.getResponseBody()) {
                         os.write(response.getBytes(StandardCharsets.UTF_8));
@@ -129,20 +133,20 @@ public class ApiMeditrack {
             // Start the server
             httpsServer.start();
 
-            System.out.println("Server is running on port " + PORT + "...");
+            System.out.println("Server is running on port " + PORT_HTTPS + "...");
         } catch (Exception e) {
             e.printStackTrace();
         }
-    
-        /* 
+     
         /** SECURE SOCKETS  */
-        /*
+
         configSecureSockets();
-
-        JsonObject file = readRequestFromClient();
-
         
+    }
+    
 
+    private static String processJsonRequest(JsonObject file) {
+        
         String user = file.get("user").getAsString();
         System.out.println("User from file: " + user);
 
@@ -152,7 +156,6 @@ public class ApiMeditrack {
             String command = file.get("command").getAsString();
             System.out.println("command from file: " + command);
 
-
             switch (command) {
                 case "getRegisters":
                     JsonObject payload = JsonParser.parseString(file.get("payload").getAsString()).getAsJsonObject();
@@ -161,7 +164,7 @@ public class ApiMeditrack {
                     query = getPatientRegisters(patient);
                     System.out.println("query: " + query);
                     break;
-            
+
                 case "allowAccessToAllRegisters":
                     payload = JsonParser.parseString(file.get("payload").getAsString()).getAsJsonObject();
                     patient = payload.get("patientName").getAsString();
@@ -187,8 +190,8 @@ public class ApiMeditrack {
                     JsonObject payload = JsonParser.parseString(file.get("payload").getAsString()).getAsJsonObject();
                     String patient = payload.get("patientName").getAsString();
                     String doctor = payload.get("doctorName").getAsString();
-
                     query = getPatientsConsultations(doctor, patient);
+
                     System.out.println("query: " + query);
                     break;
             
@@ -211,72 +214,8 @@ public class ApiMeditrack {
             }
         }
 
-        
-
-        
-        SocketFactory factory = SSLSocketFactory.getDefault();
-        try (SSLSocket socket = (SSLSocket) factory.createSocket(ADDRESS, PORT)) {
-
-            socket.setEnabledCipherSuites(new String[] { "TLS_AES_128_GCM_SHA256" });
-            socket.setEnabledProtocols(new String[] { "TLSv1.3" });
-
-            System.out.println("Connected to server");
-
-            JsonObject requestJson = new JsonObject();
-            requestJson.addProperty("value", query);
-    
-            OutputStream os = new BufferedOutputStream(socket.getOutputStream());
-            os.write(requestJson.toString().getBytes());
-            os.flush();
-
-            InputStream is = new BufferedInputStream(socket.getInputStream());
-            byte[] data = new byte[2048];
-            int len = is.read(data);
-            System.out.printf("client received %d bytes: %s%n", len, new String(data, 0, len));
-
-        } catch (IOException i) {
-            System.out.println(i);
-            return;
-        }
-        
-        */
-    }
-    
-
-    static class ApiHandler implements HttpHandler {
-        @Override
-        public void handle(HttpExchange exchange) throws IOException {
-            System.out.println("Received connection from: " + exchange.getRemoteAddress());
-
-            // Handle incoming HTTP request
-            String requestMethod = exchange.getRequestMethod();
-            if (requestMethod.equalsIgnoreCase("POST")) {
-                // Read the JSON request from the input stream
-                String requestBody = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
-
-                // Parse the JSON request
-                JsonObject jsonRequest = JsonParser.parseString(requestBody).getAsJsonObject();
-
-                // Process the JSON request
-                String response = processJsonRequest(jsonRequest);
-
-                // Send the JSON response
-                exchange.sendResponseHeaders(200, response.length());
-                try (OutputStream os = exchange.getResponseBody()) {
-                    os.write(response.getBytes(StandardCharsets.UTF_8));
-                }
-            } else {
-                // Respond with a 405 Method Not Allowed for non-POST requests
-                exchange.sendResponseHeaders(405, -1);
-            }
-        }
-    }   
-
-    private static String processJsonRequest(JsonObject jsonRequest) {
-        //Print the request
-        System.out.println("Received request: " + jsonRequest.toString());
-        return "OK";
-        
+        String response =  sendRequestToDatabase(query); 
+        return response;
     }
 
     private static void configSecureSockets(){
@@ -300,6 +239,37 @@ public class ApiMeditrack {
 			return rootJson;
         }
 	}	
+
+    private static String sendRequestToDatabase(String query){
+        SocketFactory factory = SSLSocketFactory.getDefault();
+        try (SSLSocket socket = (SSLSocket) factory.createSocket(ADDRESS, PORT)) {
+
+            socket.setEnabledCipherSuites(new String[] { "TLS_AES_128_GCM_SHA256" });
+            socket.setEnabledProtocols(new String[] { "TLSv1.3" });
+
+            System.out.println("Connected to server");
+
+            JsonObject requestJson = new JsonObject();
+            requestJson.addProperty("value", query);
+    
+            OutputStream os = new BufferedOutputStream(socket.getOutputStream());
+            os.write(requestJson.toString().getBytes());
+            os.flush();
+
+            InputStream is = new BufferedInputStream(socket.getInputStream());
+            byte[] data = new byte[2048];
+            int len = is.read(data);
+
+            String response = new String(data);
+            //System.out.printf("client received %d bytes: %s%n", len, new String(data, 0, len));
+
+            return response;
+
+        } catch (IOException i) {
+            System.out.println(i);
+            return "error";
+        }
+    }
 
     
 
