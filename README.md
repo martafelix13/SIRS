@@ -5,7 +5,7 @@
 | Number | Name                | User                                | E-mail                                     |
 | -------|---------------------|-------------------------------------| -------------------------------------------|
 | 99276  | Marta Félix         | <https://github.com/martafelix13>   | <marta.felix@tecnico.ulisboa.pt>           |
-| 110859 | Luis Marques        | <https://github.com/>               | <luis.caramelo.marques@tecnico.ulisboa.pt> |
+| 110859 | Luis Marques        | <https://github.com/oCaramelo>      | <luis.caramelo.marques@tecnico.ulisboa.pt> |
 | 99221  | Francisco Gil Mata  | <https://github.com/franciscogmata> | <francisco.gil.mata@tecnico.ulisboa.pt>    |  
 
 *(fill table above with team member information)*  
