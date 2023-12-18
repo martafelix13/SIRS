@@ -199,41 +199,46 @@ public class SecureDocument {
 
     public static void protect(String input_filename, String output_filename) throws Exception {
 
-		JsonObject file = readJsonFile(input_filename);
+		// Prepare the JSON content
+        JsonObject document = new JsonObject();
+        JsonArray valueArray = new JsonArray();
 
-		JsonArray file_values = file.get("value").getAsJsonArray() ;
-		String content = file_values.get(0).getAsString();
-		byte[] contentBytes = Base64.getDecoder().decode(content);
+        JsonObject content = fillJsonContent();
+        byte[] jsonBytes = content.toString().getBytes();
 
-		String secret_key = file_values.get(1).getAsString();
-		byte[] secretKeyBytes = Base64.getDecoder().decode(secret_key);
+        // Read keys
+        Key secretKey = CryptoExample.readSecretKey(SECRET_KEY_PATH);
+        KeyPair keyPair = readKeyPair("keys/alice.pubkey", "keys/bob.privkey");
 
-        String signature = file.get("digital-signature").getAsString();
-		byte [] cipherSignature = Base64.getDecoder().decode(signature);
+        // Encrypt content
+        byte[] cipherBytes = encryptContentAES(jsonBytes, secretKey);
+        String file = Base64.getEncoder().encodeToString(cipherBytes);
+        valueArray.add(file);
 
-		String freshnessToken = file.get("token").getAsString();
-		int temporalLimitSeconds = 60;
-        
-		// get keys
-        KeyPair keyPair = read("keys/bob.pubkey", "keys/alice.privkey");
-        
-		byte[] secretKeyDecodedBytes = decryptRSAWithPrivateKey(secretKeyBytes, keyPair);
-		writeFile("secret.key", secretKeyDecodedBytes);
-		Key secretKey = readSecretKey("secret.key");
-		deleteFile("secret.key");
+        // Encrypt the secret key with the public target key
+        byte[] secretKeyFile = readFile(SECRET_KEY_PATH);
 
-		byte[] contentDecoded = decryptAES(contentBytes, secretKey);
+        byte[] secretKeyCipher = encryptContentRSAWithPublicKey(secretKeyFile, keyPair);
+        String secret_key = Base64.getEncoder().encodeToString(secretKeyCipher);
+        valueArray.add(secret_key);
 
-		System.out.println("Verifying...");
-		boolean resultSignature = verifyDigitalSignature(cipherSignature, contentDecoded, keyPair);
-		System.out.println("Signature is " + (resultSignature ? "right" : "wrong"));
+        document.add("value", valueArray);
 
-		boolean resultFreshnessToken = verifyFreshnessToken(freshnessToken, temporalLimitSeconds);
-		System.out.println("Freshness token is " + (resultFreshnessToken ? "right" : "wrong"));
+        // Make digital signature
+        byte[] cipherDigest = makeDigitalSignature(jsonBytes, keyPair);
+        System.out.println("Signature size: " + cipherDigest.length + " bytes");
+        byte[] cipherDigestEncrypt = encryptContentRSAWithPrivateKey(cipherDigest, keyPair);
+        String digital_signature = Base64.getEncoder().encodeToString(cipherDigestEncrypt);
 
-		writeFile(output_filename, contentDecoded);
+        document.addProperty("digital-signature", digital_signature);
+        document.addProperty("token", "");
+
+        // Write JSON object to file
+        try (FileWriter fileWriter = new FileWriter(filename)) {
+            Gson gson = new GsonBuilder().setPrettyPrinting().create();
+            gson.toJson(document, fileWriter);
+        }
     }
-
 
     public static void unprotected(String input_filename, String output_filename) throws Exception {
 
