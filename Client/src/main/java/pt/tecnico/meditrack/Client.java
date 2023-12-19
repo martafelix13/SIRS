@@ -6,6 +6,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
 import java.security.PublicKey;
+import java.sql.Connection;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -13,10 +14,12 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Base64;
 import java.util.Scanner;
 import javax.net.ssl.HttpsURLConnection;
 public class Client {
@@ -46,9 +49,7 @@ public class Client {
                         String username = scanner.next();
                         
                         sendClientAuthenticationRequest(username);
-
-                                         
-
+                            
                         printClientMenu();
                         int clientChoice = getUserChoice(scanner);
                         switch (clientChoice) {
@@ -182,42 +183,35 @@ public class Client {
 
 
     private static void sendClientAuthenticationRequest(String username) {
-        // Construct your JSON request payload
-        JsonObject jsonPayload = new JsonObject();
-        jsonPayload.addProperty("user", "client");
-        jsonPayload.addProperty("command", "authenticate");
 
-        // Create a nested JSON object for the payload
+        JsonObject jsonPayload = new JsonObject();
+        jsonPayload.addProperty("user", "patient");
+        jsonPayload.addProperty("command", "authPatient");
+
         JsonObject payload = new JsonObject();
         payload.addProperty("username", username);
 
         //load public key from /keys
 
         try {
-            // Load public key from /keys/patient.pubkey
             Path publicKeyPath = Paths.get("keys", "patient.pubkey");
             byte[] publicKeyBytes = Files.readAllBytes(publicKeyPath);
-            String publicKeyString = new String(publicKeyBytes);
+           
+            String publicKeyString =  Base64.getEncoder().encodeToString(publicKeyBytes);
 
-            // Add public key to payload
             payload.addProperty("publicKey", publicKeyString);
+            jsonPayload.addProperty("payload", payload.toString());
         } catch (Exception e) {
-            // Handle exceptions (e.g., file not found, IO errors)
             e.printStackTrace();
         }
 
-        // Convert the payload to a JSON string and add it to the main JSON object
-        jsonPayload.addProperty("payload", payload.toString());
-
-        // Convert the main JSON object to a string
-        String jsonRequest = jsonPayload.toString();
-
-        // Send the JSON request to the server
-        sendJsonRequest(jsonRequest);
-
-        // Add more logic here based on the server's response
+        try {
+            String jsonRequest = jsonPayload.toString();
+            sendJsonRequest(jsonRequest);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }     
     }
-
  
 
     private static void sendClientViewRequest(String patientName) {
@@ -237,9 +231,11 @@ public class Client {
         String jsonRequest = jsonPayload.toString();
 
         // Send the JSON request to the server
-        sendJsonRequest(jsonRequest);
-
-        // Add more logic here based on the server's response
+        try {
+            sendJsonRequest(jsonRequest);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private static void sendClientGiveDoctorAccessRequest(String patientName, String doctorName) {
@@ -260,8 +256,11 @@ public class Client {
         String jsonRequest = jsonPayload.toString();
 
         // Send the JSON request to the server
-        sendJsonRequest(jsonRequest);
-
+        try {
+            sendJsonRequest(jsonRequest);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private static void sendClientDeleteRequest(String patientName) {
@@ -281,7 +280,11 @@ public class Client {
         String jsonRequest = jsonPayload.toString();
 
         // Send the JSON request to the server
-        sendJsonRequest(jsonRequest);
+        try {
+            sendJsonRequest(jsonRequest);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }    
     }
     
 
@@ -303,9 +306,11 @@ public class Client {
         String jsonRequest = jsonPayload.toString();
 
         // Send the JSON request to the server
-        sendJsonRequest(jsonRequest);
-
-        // Add more logic here based on the server's response
+        try {
+            sendJsonRequest(jsonRequest);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private static void sendDoctorCreateConsultationRequest(String doctorName, String patientName, String date, String speciality, String practice, String treatmentSummary) {
@@ -330,7 +335,11 @@ public class Client {
         String jsonRequest = jsonPayload.toString();
 
         // Send the JSON request to the server
-        sendJsonRequest(jsonRequest);
+        try {
+            sendJsonRequest(jsonRequest);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private static void sendDoctorChangeSpecialityRequest(String doctorName, String newSpeciality) {
@@ -351,22 +360,28 @@ public class Client {
         String jsonRequest = jsonPayload.toString();
 
         // Send the JSON request to the server
-        sendJsonRequest(jsonRequest);
+        try {
+            sendJsonRequest(jsonRequest);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
-    private static void sendJsonRequest(String jsonRequest) {
-        try {
-            URL url = new URL(API_URL);
-            HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
+    private static void sendJsonRequest(String jsonRequest) throws IOException {
+        URL url = new URL(API_URL);
+        HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
 
+        try {
+           
             // Set up the HTTP request
             connection.setRequestMethod("POST");
             connection.setRequestProperty("Content-Type", "application/json");
+            //connection.setRequestProperty("Connection", " keep-alive");
             connection.setDoOutput(true);
 
             // Send the JSON request payload
             try (OutputStream os = connection.getOutputStream()) {
-                byte[] input = jsonRequest.getBytes("utf-8");
+                byte[] input = jsonRequest.getBytes();
                 os.write(input, 0, input.length);
             }
 
@@ -379,11 +394,12 @@ public class Client {
                 }
                 System.out.println("Server Response: " + response.toString());
             }
-
-            // Close the connection
-            connection.disconnect();
+            
+            //connection.disconnect();
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            connection.disconnect();
         }
     }
 }

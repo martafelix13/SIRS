@@ -19,6 +19,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Base64;
 import java.util.Scanner;
 
 import com.google.gson.Gson;
@@ -31,17 +32,28 @@ import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpsServer;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
 import javax.net.SocketFactory;
 import javax.sound.sampled.Port;
 import javax.net.ssl.*;
 
 import java.io.FileInputStream;
+import java.security.InvalidKeyException;
+import java.security.KeyFactory;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
+import java.security.SecureRandom;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.X509EncodedKeySpec;
+
 import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.HttpsConfigurator;
 import com.sun.net.httpserver.HttpsParameters;
@@ -60,95 +72,90 @@ public class ApiMeditrack {
     private final static String DOCTOR = "doctor";
     private final static String SOS = "sos";
 
-    public static void main(String[] args) throws FileNotFoundException, IOException, NoSuchAlgorithmException, KeyStoreException, CertificateException, UnrecoverableKeyException, KeyManagementException {
-
+    public static void main(String[] args) throws NoSuchAlgorithmException {
         try {
-            // Specify the keystore and truststore file paths and passwords
-            String keystoreFilePath = "certificates/server.p12";
-            String keystorePassword = "changeme";
-            String truststoreFilePath = "certificates/servertruststore.jks";
-            String truststorePassword = "changeme";
-
-            // Load the keystore
-            char[] keystorePasswordChars = keystorePassword.toCharArray();
-            KeyStore keyStore = KeyStore.getInstance("PKCS12");
-            keyStore.load(new FileInputStream(keystoreFilePath), keystorePasswordChars);
-
-            // Load the truststore
-            char[] truststorePasswordChars = truststorePassword.toCharArray();
-            KeyStore trustStore = KeyStore.getInstance("JKS");
-            trustStore.load(new FileInputStream(truststoreFilePath), truststorePasswordChars);
-            
-
-
-            // Initialize the key manager factory
-            KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-            keyManagerFactory.init(keyStore, keystorePasswordChars);
-
-            // Initialize the trust manager factory
-            TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-            trustManagerFactory.init(trustStore);
-
-            // Initialize the SSL context
-            SSLContext sslContext = SSLContext.getInstance("TLS");
-            sslContext.init(keyManagerFactory.getKeyManagers(), trustManagerFactory.getTrustManagers(), null);
-
-            // Create the HTTPS server
-            HttpsServer httpsServer = HttpsServer.create(new InetSocketAddress(PORT_HTTPS), 0);
-            httpsServer.setHttpsConfigurator(new HttpsConfigurator(sslContext));
-
-            // Create a simple context to handle requests
+            // HTTPS server configuration
+            HttpsServer httpsServer = configureHttpsServer();
             httpsServer.createContext("/api", exchange -> {
-                // Handle the incoming request at the "/api" endpoint
-                
-                // notifica que o servidor recebeu um pedido
+            
                 System.out.println("Received connection from: " + exchange.getRemoteAddress());
-                // Read the request method (e.g., POST)
-                String requestMethod = exchange.getRequestMethod();
                 
-                // Read the request headers (e.g., Content-Type)
-                Headers requestHeaders = exchange.getRequestHeaders();
-                
-                // Get the request input stream to read the request body
                 try (InputStream request = exchange.getRequestBody()) {
-                    // Read the JSON payload from the input stream
                     String requestBody = new String(request.readAllBytes(), StandardCharsets.UTF_8);
                     
-                    // Handle the JSON payload (you can process or save it as needed)
                     System.out.println("Received JSON request: " + requestBody);
                     JsonObject jsonRequest = JsonParser.parseString(requestBody).getAsJsonObject();
+                    String response;
 
-                    String response = processJsonRequest(jsonRequest);
-                    
-                    // Send a response back to the client
-                    exchange.sendResponseHeaders(200, response.length());
-                    try (OutputStream os = exchange.getResponseBody()) {
-                        os.write(response.getBytes(StandardCharsets.UTF_8));
+                    try {
+                        response = processJsonRequest(jsonRequest);
+                        exchange.sendResponseHeaders(200, response.length());
+
+                        try (OutputStream os = exchange.getResponseBody()) {
+                            os.write(response.getBytes(StandardCharsets.UTF_8));
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    } catch ( Exception e) {
+                        e.printStackTrace();
                     }
-                } catch (IOException e) {
-                    e.printStackTrace();
                 }
             });
 
-            // Start the server
             httpsServer.start();
-
+        
+    
             System.out.println("Server is running on port " + PORT_HTTPS + "...");
         } catch (Exception e) {
             e.printStackTrace();
         }
-     
-        /** SECURE SOCKETS  */
 
-        configSecureSockets();
-        
+        try {
+            configSecureSockets();
+            System.out.println("API is running on port " + PORT + "...");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static HttpsServer configureHttpsServer() throws IOException, NoSuchAlgorithmException, KeyStoreException, CertificateException, UnrecoverableKeyException, KeyManagementException {
+        // Specify the keystore and truststore file paths and passwords
+        String keystoreFilePath = "certificates/server.p12";
+        String keystorePassword = "changeme";
+        String truststoreFilePath = "certificates/servertruststore.jks";
+        String truststorePassword = "changeme";
+    
+        char[] keystorePasswordChars = keystorePassword.toCharArray();
+        KeyStore keyStore = KeyStore.getInstance("PKCS12");
+        keyStore.load(new FileInputStream(keystoreFilePath), keystorePasswordChars);
+    
+        char[] truststorePasswordChars = truststorePassword.toCharArray();
+        KeyStore trustStore = KeyStore.getInstance("JKS");
+        trustStore.load(new FileInputStream(truststoreFilePath), truststorePasswordChars);
+    
+        KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+        keyManagerFactory.init(keyStore, keystorePasswordChars);
+    
+        TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+        trustManagerFactory.init(trustStore);
+    
+        SSLContext sslContext = SSLContext.getInstance("TLS");
+        sslContext.init(keyManagerFactory.getKeyManagers(), trustManagerFactory.getTrustManagers(), null);
+    
+        HttpsServer httpsServer = HttpsServer.create(new InetSocketAddress(PORT_HTTPS), 0);
+        httpsServer.setHttpsConfigurator(new HttpsConfigurator(sslContext));
+
+        return httpsServer;
     }
     
 
-    private static String processJsonRequest(JsonObject file) {
+
+    private static String processJsonRequest(JsonObject file) throws Exception {
         
         String user = file.get("user").getAsString();
         System.out.println("User from file: " + user);
+        String response = "Internal server error";
 
         String query = "";
         if (user.equals(PATIENT)) {
@@ -157,12 +164,22 @@ public class ApiMeditrack {
             System.out.println("command from file: " + command);
 
             switch (command) {
-                case "getRegisters":
+                case "authPatient":
                     JsonObject payload = JsonParser.parseString(file.get("payload").getAsString()).getAsJsonObject();
+                    //JsonObject payload = file.get("payload").getAsJsonObject();
+                    String username = payload.get("username").getAsString();
+                    String publicKeyString = payload.get("publicKey").getAsString();
+                    response = handleAuthString(username, publicKeyString);
+
+                    break;
+
+                case "getRegisters":
+                    payload = JsonParser.parseString(file.get("payload").getAsString()).getAsJsonObject();
                     String patient = payload.get("patientName").getAsString();
                     System.out.println("patientName from file: " + patient);
                     query = getPatientRegisters(patient);
                     System.out.println("query: " + query);
+                    response =  sendRequestToDatabase(query);
                     break;
 
                 case "allowAccessToAllRegisters":
@@ -170,13 +187,15 @@ public class ApiMeditrack {
                     patient = payload.get("patientName").getAsString();
                     String doctor = payload.get("doctorName").getAsString();
                     query = allowAccessToAllRegisters(patient, doctor);
-    
+                    response =  sendRequestToDatabase(query);
                     break;
                 
                 case "deletePersonalInformation":
                     payload = JsonParser.parseString(file.get("payload").getAsString()).getAsJsonObject();
                     patient = payload.get("patientName").getAsString();
                     query = deletePersonalInformation(patient);
+                    response =  sendRequestToDatabase(query);
+                    break;
             }
         }
 
@@ -193,6 +212,7 @@ public class ApiMeditrack {
                     query = getPatientsConsultations(doctor, patient);
 
                     System.out.println("query: " + query);
+                    response =  sendRequestToDatabase(query);
                     break;
             
                 case "createConsultation":
@@ -204,6 +224,7 @@ public class ApiMeditrack {
                     String practice = payload.get("pratice").getAsString();
                     String treatmentSummary = payload.get("treatmentSummary").getAsString();
                     query = createConsultation(patient, date, medicalSpeciality, doctor, practice, treatmentSummary);
+                    response =  sendRequestToDatabase(query);
                     break;
                 
                 case "changeMedicalSpeciality":
@@ -211,10 +232,10 @@ public class ApiMeditrack {
                     doctor = payload.get("doctorName").getAsString();
                     medicalSpeciality = payload.get("newMedicalSpeciality").getAsString();
                     query = changeMedicalSpeciality(doctor, medicalSpeciality);
+                    response =  sendRequestToDatabase(query);
+                    break;
             }
         }
-
-        String response =  sendRequestToDatabase(query); 
         return response;
     }
 
@@ -223,22 +244,7 @@ public class ApiMeditrack {
         System.setProperty("javax.net.ssl.keyStorePassword", "changeme");
         System.setProperty("javax.net.ssl.trustStore", "certificates/apitruststore.jks");
         System.setProperty("javax.net.ssl.trustStorePassword", "changeme");
-    }
-    
-
-    private static JsonObject readRequestFromClient() throws FileNotFoundException, IOException {
-        String filename = "src/main/java/pt/tecnico/meditrack/getRegisterJson.json";
-        return readJsonFile(filename);
-    }
-
-    private static JsonObject readJsonFile(String filename) throws FileNotFoundException, IOException{
-		try (FileReader fileReader = new FileReader(filename)) {
-            Gson gson = new Gson();
-            JsonObject rootJson = gson.fromJson(fileReader, JsonObject.class);
-
-			return rootJson;
-        }
-	}	
+    }	
 
     private static String sendRequestToDatabase(String query){
         SocketFactory factory = SSLSocketFactory.getDefault();
@@ -261,7 +267,6 @@ public class ApiMeditrack {
             int len = is.read(data);
 
             String response = new String(data);
-            //System.out.printf("client received %d bytes: %s%n", len, new String(data, 0, len));
 
             return response;
 
@@ -271,8 +276,12 @@ public class ApiMeditrack {
         }
     }
 
-    
+    private static String handleAuthString(String username, String publicKeyString) throws NoSuchAlgorithmException, InvalidKeySpecException {
+        JsonObject response =  new JsonObject(); 
+        response.addProperty("challenge", "2");
 
+        return response.toString();
+    } 
 
     private static String getPatientRegisters(String name) {
 
