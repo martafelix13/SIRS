@@ -5,12 +5,18 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
+import java.security.PublicKey;
 import java.io.BufferedReader;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Scanner;
 import javax.net.ssl.HttpsURLConnection;
 public class Client {
@@ -34,6 +40,15 @@ public class Client {
             switch (choice) {
                 case 1:
                     while (true){
+                        // Client menu
+                        // Authenticate the user
+                        System.out.println("Enter your username: ");
+                        String username = scanner.next();
+                        
+                        sendClientAuthenticationRequest(username);
+
+                                         
+
                         printClientMenu();
                         int clientChoice = getUserChoice(scanner);
                         switch (clientChoice) {
@@ -165,6 +180,45 @@ public class Client {
 
     //////////////// JSON Requests ////////////////
 
+
+    private static void sendClientAuthenticationRequest(String username) {
+        // Construct your JSON request payload
+        JsonObject jsonPayload = new JsonObject();
+        jsonPayload.addProperty("user", "client");
+        jsonPayload.addProperty("command", "authenticate");
+
+        // Create a nested JSON object for the payload
+        JsonObject payload = new JsonObject();
+        payload.addProperty("username", username);
+
+        //load public key from /keys
+
+        try {
+            // Load public key from /keys/patient.pubkey
+            Path publicKeyPath = Paths.get("keys", "patient.pubkey");
+            byte[] publicKeyBytes = Files.readAllBytes(publicKeyPath);
+            String publicKeyString = new String(publicKeyBytes);
+
+            // Add public key to payload
+            payload.addProperty("publicKey", publicKeyString);
+        } catch (Exception e) {
+            // Handle exceptions (e.g., file not found, IO errors)
+            e.printStackTrace();
+        }
+
+        // Convert the payload to a JSON string and add it to the main JSON object
+        jsonPayload.addProperty("payload", payload.toString());
+
+        // Convert the main JSON object to a string
+        String jsonRequest = jsonPayload.toString();
+
+        // Send the JSON request to the server
+        sendJsonRequest(jsonRequest);
+
+        // Add more logic here based on the server's response
+    }
+
+ 
 
     private static void sendClientViewRequest(String patientName) {
         // Construct your JSON request payload
