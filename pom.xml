@@ -3,7 +3,7 @@
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>pt.tecnico.sirs.a34</groupId>
+    <groupId>pt.tecnico.meditrack</groupId>
     <artifactId>Meditrack</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
@@ -14,9 +14,8 @@
         builds the selected projects in order. -->
     <modules>
         <module>SecureDocument</module>
-        <module>ApiMeditrack</module>
         <module>Database</module>
-        <module>MeditrackUser</module>
+        <module>ApiMeditrack</module>
         <module>Client</module>
     </modules>
 

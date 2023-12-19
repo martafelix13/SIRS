@@ -1,4 +1,5 @@
 package pt.tecnico.meditrack;
+//import pt.tecnico.meditrack.SecureDocument;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -194,11 +195,8 @@ public class Client {
         //load public key from /keys
 
         try {
-            Path publicKeyPath = Paths.get("keys", "patient.pubkey");
-            byte[] publicKeyBytes = Files.readAllBytes(publicKeyPath);
-           
+            byte[] publicKeyBytes = readFile("pub/patient.pubkey");           
             String publicKeyString =  Base64.getEncoder().encodeToString(publicKeyBytes);
-
             payload.addProperty("publicKey", publicKeyString);
             jsonPayload.addProperty("payload", payload.toString());
         } catch (Exception e) {
@@ -212,7 +210,14 @@ public class Client {
             e.printStackTrace();
         }     
     }
- 
+
+    private static byte[] readFile(String path) throws FileNotFoundException, IOException {
+		FileInputStream fis = new FileInputStream(path);
+		byte[] content = new byte[fis.available()];
+		fis.read(content);
+		fis.close();
+		return content;
+	}
 
     private static void sendClientViewRequest(String patientName) {
         // Construct your JSON request payload

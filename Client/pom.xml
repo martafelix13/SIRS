@@ -3,7 +3,7 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 <modelVersion>4.0.0</modelVersion>
 <!--  http://maven.apache.org/pom.html#Quick_Overview  -->
-<groupId>pt.tecnico.sirs.a34</groupId>
+<groupId>pt.tecnico.meditrack</groupId>
 <artifactId>Client</artifactId>
 <version>1.0.0-SNAPSHOT</version>
 <packaging>jar</packaging>
@@ -41,6 +41,11 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/ma
         <groupId>com.google.code.gson</groupId>
         <artifactId>gson</artifactId>
         <version>${gson.version}</version>
+    </dependency>
+    <dependency>
+        <groupId>pt.tecnico.meditrack</groupId>
+        <artifactId>libraries</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
     </dependency>
 </dependencies>
 <build>

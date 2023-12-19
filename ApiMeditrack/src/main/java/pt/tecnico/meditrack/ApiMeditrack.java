@@ -1,10 +1,10 @@
 package pt.tecnico.meditrack;
+import pt.tecnico.meditrack.SecureDocument;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -71,6 +71,9 @@ public class ApiMeditrack {
     private final static String PATIENT = "patient";
     private final static String DOCTOR = "doctor";
     private final static String SOS = "sos";
+
+    private final static int CHALLENGE_SIZE = 16;
+
 
     public static void main(String[] args) throws NoSuchAlgorithmException {
         try {
@@ -156,7 +159,6 @@ public class ApiMeditrack {
         String user = file.get("user").getAsString();
         System.out.println("User from file: " + user);
         String response = "Internal server error";
-
         String query = "";
         if (user.equals(PATIENT)) {
 
@@ -276,12 +278,21 @@ public class ApiMeditrack {
         }
     }
 
-    private static String handleAuthString(String username, String publicKeyString) throws NoSuchAlgorithmException, InvalidKeySpecException {
-        JsonObject response =  new JsonObject(); 
+    private static String handleAuthString(String username, String publicKeyString) throws NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
+        
+        byte[] keyBytes = Base64.getDecoder().decode(publicKeyString);
+        JsonObject response = new JsonObject();
         response.addProperty("challenge", "2");
-
         return response.toString();
     } 
+
+    public static byte[] generateRandomString(int length) {
+        SecureRandom secureRandom = new SecureRandom();
+        byte[] randomBytes = new byte[length];
+        secureRandom.nextBytes(randomBytes);
+
+        return randomBytes;
+    }
 
     private static String getPatientRegisters(String name) {
 
