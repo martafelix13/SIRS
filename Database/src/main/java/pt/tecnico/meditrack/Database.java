@@ -4,6 +4,8 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -14,11 +16,18 @@ import java.net.Socket;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
+import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Time;
+import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import com.google.gson.Gson;
@@ -27,6 +36,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
+import javax.management.Query;
 import javax.net.ServerSocketFactory;
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
@@ -41,8 +51,15 @@ public class Database {
         System.setProperty("javax.net.ssl.keyStorePassword", "changeme");
         System.setProperty("javax.net.ssl.trustStore", "certificates/databasetruststore.jks");
         System.setProperty("javax.net.ssl.trustStorePassword", "changeme");
-        startSecureSocketServer();
+
+
+            String query = readQueryFromFile("queries/getConsultationsRecords.sql");
+            String response = handleQuery(query);
+
+            System.out.println("response: " + response);
+        //startSecureSocketServer();
     }
+
 
     public static void startSecureSocketServer() throws IOException {
 
@@ -78,9 +95,11 @@ public class Database {
             //System.out.printf("server received %d bytes: %s%n", len, message);
 
             JsonObject clientJson = JsonParser.parseString(message).getAsJsonObject();
-            String query = clientJson.get("value").getAsString();
+            String queryPath = clientJson.get("value").getAsString();
 
+            String query = readQueryFromFile("queries/getConsultationsRecords.sql");
             String response = handleQuery(query);
+
             System.out.println("response: " + response);
 
             os.write(response.getBytes("UTF-8"), 0, response.getBytes("UTF-8").length);
@@ -88,6 +107,17 @@ public class Database {
         } catch (IOException e) {
             System.out.println("Error handling connection: " + e.getMessage());
         }
+    }
+
+    private static String readQueryFromFile(String filePath) throws IOException {
+        StringBuilder query = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                query.append(line).append("\n");
+            }
+        }
+        return query.toString();
     }
     
 
@@ -116,40 +146,35 @@ public class Database {
                 }
                 return data.toString();
             } else {
-                return getData(query).toString();
+                return getData(query);
             }
     }
 
-    public static JsonObject getData(String query) throws IOException{
+    public static String getData(String query) throws IOException{
 
         String jdbcUrl = "jdbc:sqlite:src/main/java/pt/tecnico/meditrack/meditrack.db";
-        JsonObject data = new JsonObject();
-        JsonArray resultArray = new JsonArray();
+  
+        String jsonResult = "";
 
-        try (Connection connection = DriverManager.getConnection(jdbcUrl);
-             Statement statement = connection.createStatement()) {
+        try (Connection connection = DriverManager.getConnection(jdbcUrl)) {
+            
+        try (PreparedStatement preparedStatement = connection.prepareStatement(query);
+            Statement statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery(query)) {
 
-            System.out.println("Query received: " + query);
-            ResultSet resultSet = statement.executeQuery(query);
-            ResultSetMetaData metaData = resultSet.getMetaData();
+            List<Map<String, Object>> resultList = convertResultSetToMapList(resultSet);
+            jsonResult = convertMapListToJson(resultList);
 
-            while (resultSet.next()) {
-                JsonObject rowObject = new JsonObject();
-
-                for (int i = 1; i <= metaData.getColumnCount(); i++) {
-                    String columnName = metaData.getColumnName(i);
-                    Object columnValue = resultSet.getObject(i);
-                    rowObject.addProperty(columnName, columnValue.toString());
-                }
-
-                resultArray.add(rowObject);                    
+            System.out.println(jsonResult);
+                
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-
         } catch (Exception e) {
             e.printStackTrace();
         }
-        data.add("value", resultArray);
-        return data;
+
+        return jsonResult;
     }
 
 
@@ -166,7 +191,31 @@ public class Database {
     
         } catch (Exception e) {
             e.printStackTrace();
-            return -1; // or handle the error in an appropriate way
+            return -1; 
         }
+    }
+    private static List<Map<String, Object>> convertResultSetToMapList(ResultSet resultSet) throws Exception {
+        List<Map<String, Object>> resultList = new ArrayList<>();
+        ResultSetMetaData metaData = resultSet.getMetaData();
+
+        while (resultSet.next()) {
+            Map<String, Object> row = new HashMap<>();
+
+            for (int i = 1; i <= metaData.getColumnCount(); i++) {
+                String columnName = metaData.getColumnName(i);
+                Object columnValue = resultSet.getObject(i);
+                row.put(columnName, columnValue);
+            }
+
+            resultList.add(row);
+        }
+
+        return resultList;
+    }
+
+    private static String convertMapListToJson(List<Map<String, Object>> mapList) {
+        // You need to implement a proper JSON converter based on the actual datatype
+        // This is just a placeholder
+        return mapList.toString();
     }
 }

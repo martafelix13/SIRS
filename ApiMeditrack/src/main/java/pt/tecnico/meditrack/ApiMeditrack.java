@@ -1,6 +1,7 @@
 package pt.tecnico.meditrack;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectOutputStream;
@@ -30,6 +31,7 @@ import javax.net.ssl.*;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.security.InvalidKeyException;
 import java.security.Key;
@@ -85,26 +87,46 @@ public class ApiMeditrack {
                     JsonObject jsonRequest = JsonParser.parseString(requestBody).getAsJsonObject();
                     String response;
 
-                    try {
-                        response = processJsonRequest(jsonRequest);
-                        //protectResponse(response);
-                        System.out.println("Sending JSON response: " + response);
-                        //protectResponse(response, "Bob");
-                        //JsonObject jsonResponse = JsonParser.parseString(response).getAsJsonObject();
-                        
-                        //saveJsonToFile(jsonResponse, filename_db);
-                        exchange.sendResponseHeaders(200, response.length());
+                    if ( jsonRequest.get("command").getAsString().equals("authPatient") || jsonRequest.get("command").getAsString().equals("validateAuth") )
+                        try {
+                            response = processJsonRequest(jsonRequest);
+                            exchange.sendResponseHeaders(200, response.length());
 
                         try (OutputStream os = exchange.getResponseBody()) {
                             os.write(response.getBytes(StandardCharsets.UTF_8));
                         } catch (IOException e) {
                             e.printStackTrace();
+                            }
+                        } catch ( Exception e) {
+                            e.printStackTrace();
                         }
-                    } catch ( Exception e) {
-                        e.printStackTrace();
+                    
+                    else {
+                        try {
+                            response = processJsonRequest(jsonRequest);
+                            String encryptResponse = protectResponse(response, "Bob");
+                            System.out.println("Sending JSON response: " + response);
+                            System.out.println("Encrypt Json: " + encryptResponse);
+                            //protectResponse(response, "Bob");
+                            //JsonObject jsonResponse = JsonParser.parseString(response).getAsJsonObject();
+                            
+                            //saveJsonToFile(jsonResponse, filename_db);
+                            exchange.sendResponseHeaders(200, encryptResponse.length());
+
+                            try (OutputStream os = exchange.getResponseBody()) {
+                                os.write(response.getBytes(StandardCharsets.UTF_8));
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        } catch ( Exception e) {
+                            e.printStackTrace();
+                        };
                     }
+                } catch ( Exception e) {
+                            e.printStackTrace();
                 }
-            });
+        });
+        
 
             httpsServer.start();
         
@@ -191,8 +213,7 @@ public class ApiMeditrack {
                     query = getPatientRegisters(patient);
                     System.out.println("query: " + query);
                     response =  sendRequestToDatabase(query);
-
-                    //protectResponse(response, patient);
+                    protectResponse(response, patient);
                     break;
 
                 case "allowAccessToAllRegisters":
@@ -260,26 +281,22 @@ public class ApiMeditrack {
         return response;
     }
 
-    private static void protectResponse(String response, String username) {
+    private static String protectResponse(String response, String username) {
+
+        JsonObject responsedb = JsonParser.parseString(response).getAsJsonObject();
+        JsonObject responseClient = new JsonObject();
+
+        PublicKey clientKey;
+        PrivateKey privateKey;
         try {
-            System.out.println("Response: " + response);
-            String pathToPrivateString = "./keys/api.privkey";
-
-            JsonObject clientResponse = new JsonObject();
-
-
-        
-            //String pathToPrivateString = "./keys/api.privkey";
-            JsonObject jsonResponse = JsonParser.parseString(response).getAsJsonObject();
-            //saveJsonToFile(jsonResponse, "db.json");
-
-            PublicKey pubKey = clientPublicKeys.get(username);
-            PrivateKey privKey = readPrivateKey(pathToPrivateString);
-
-            SecureDocument.protectJson(jsonResponse, clientResponse, pubKey , privKey, "keys/secret.key");
+            clientKey = readPublicKey("keys/patient.pubkey");
+            privateKey = readPrivateKey("keys/api.privkey");
+            SecureDocument.protectJson(responsedb, responseClient, clientKey,privateKey, "keys/secret.key");
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        return responseClient.toString();
     }
     
     private static void configSecureSockets(){
@@ -395,43 +412,50 @@ public class ApiMeditrack {
     }
 
     private static String getPatientRegisters(String name) {
-
-        return "SELECT * FROM patients " + 
-                "JOIN consultations ON consultations.patientName = patients.name " + 
-                    "WHERE patients.name = '" + name + "';";
+        String adaptQuery = "";
+        try {
+            String query = readQueryFromFile("queries/getPatientsQuery.sql");
+            adaptQuery = query.replace("?", "'" + name + "'");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return adaptQuery;
     }
 
     private static String allowAccessToAllRegisters(String patient, String doctor) {
-
-        return "INSERT INTO autorizations (consultationId, doctorName)" +
-                " SELECT id, '" + doctor + "' " +
-                    " FROM consultations"  +
-                        " WHERE patientName = '"+ patient + "';";
+        return "INSERT INTO autorizations (consultation_id, doctor_name) " +
+        "SELECT consultation_id, '" + doctor + "' AS doctor_name " + 
+        "FROM consultations " + 
+        "WHERE patient_name = '" + patient + "'";
     }
 
     private static String deletePersonalInformation(String patient) {
-
-        return "DELETE FROM consultations WHERE patientName = '" + patient + "'; " + 
-            "DELETE FROM patients WHERE name = '" + patient + "';";
+        return "DELETE FROM consultations WHERE patient_name = " + patient + "; \n" +
+                "DELETE FROM allergies WHERE patient_name = ?;\n" + 
+                "DELETE FROM autorizations WHERE consultation_id IN (" +
+                "SELECT consultation_id FROM consultations WHERE patient_name = " + patient + "); \n" +
+                    "DELETE FROM patients WHERE name = " + patient;
     }
 
-
     private static String getPatientsConsultations(String doctor, String patient) {
-        return "SELECT * FROM consultations " + 
-                    "JOIN authorizations ON consultation.id = authorizations.consultationId" + 
-                        "WHERE autorization.doctorName = '" + doctor + "' AND consultation.patientName = '" + patient+ "';";
+        String adaptQuery = "";
+        try {
+            String query = readQueryFromFile("queries/getConsultationsRecords.sql");
+            adaptQuery = query.replace("?", "'" + doctor + "'");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return adaptQuery;
     }
 
     private static String createConsultation(String patientName, String date, String medicalSpeciality, String doctorName, String practice, String treatmentSummary) {
-        return "INSERT INTO consultations (patientName, date, medicalSpeciality, doctorName,  practice, treatmentSummary) "+ 
-                    "VALUES (' " + patientName + "', '" + date + "', '" + medicalSpeciality + "', '" + doctorName + "',  '" + practice + "', '" + treatmentSummary +"');";
+        return "INSERT INTO consultations (patient_name, date, medical_speciality, doctor_name, practice, treatment_summary)\n" + 
+                "\n VALUES ( " + patientName + ", " + date + "," + medicalSpeciality + "," + doctorName + ", " + practice + ", " + treatmentSummary + ")";
     }
 
     private static String changeMedicalSpeciality(String doctor, String medicalSpeciality) {
-        return "UPDATE doctors SET medicalSpeciality = '" + medicalSpeciality + "' WHERE doctor = '" + doctor + "';";    
+        return "UPDATE doctors SET medical_speciality = " + medicalSpeciality + " WHERE name = " + doctor;
     }
-
-
 
     private static byte [] decryptRSAWithPrivateKey(byte[] content, PrivateKey privateKey) throws Exception{
         Cipher cipher = Cipher.getInstance("RSA");
@@ -488,4 +512,17 @@ public class ApiMeditrack {
             e.printStackTrace();
         };
     } 
+
+
+
+    private static String readQueryFromFile(String filePath) throws IOException {
+        StringBuilder query = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                query.append(line).append("\n");
+            }
+        }
+        return query.toString();
+    }
 }
