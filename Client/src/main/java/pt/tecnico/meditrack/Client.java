@@ -534,10 +534,20 @@ public class Client {
                 }
                 System.out.println(response.toString());
 
+                JsonObject responseJson =  JsonParser.parseString(response.toString()).getAsJsonObject();
+
+                PrivateKey privKey = readPrivateKey("keys/patient.privkey");
+                PublicKey pubKey = readPublicKey("keys/api.pubkey");
+                
+                JsonObject decryptJson = SecureDocument.unprotectJson(responseJson, privKey, pubKey);
+                System.out.println(decryptJson.toString());
+
 
                 // Get the payload from the response
-                JsonObject jsonResponse = JsonParser.parseString(response.toString()).getAsJsonObject();
+                JsonObject jsonResponse = decryptJson.get("content").getAsJsonObject();
                 String challenge = jsonResponse.get("challenge").getAsString();
+                System.out.println(decryptJson.toString());
+
 
                 // Decrypting the challenge
                 byte[] dencryptChallenge = Base64.getDecoder().decode(challenge);

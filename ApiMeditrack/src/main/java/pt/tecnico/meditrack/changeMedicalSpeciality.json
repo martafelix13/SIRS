@@ -1,5 +1,0 @@
-{
-    "user": "doctor",
-    "command": "changeMedicalSpeciality",
-    "payload": "{\"doctorName\":\"Dr.Smith\",\"newMedicalSpeciality\":\"Dermatology\"}"
-}

@@ -1,5 +1,0 @@
-{
-    "user": "patient",
-    "command": "deletePersonalInformation",
-    "payload": "{patientName:\"Bob\"}"
-}

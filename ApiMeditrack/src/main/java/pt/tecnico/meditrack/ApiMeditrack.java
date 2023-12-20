@@ -86,42 +86,24 @@ public class ApiMeditrack {
                     System.out.println("Received JSON request: " + requestBody);
                     JsonObject jsonRequest = JsonParser.parseString(requestBody).getAsJsonObject();
                     String response;
-
-                    if ( jsonRequest.get("command").getAsString().equals("authPatient") || jsonRequest.get("command").getAsString().equals("validateAuth") )
-                        try {
-                            response = processJsonRequest(jsonRequest);
-                            exchange.sendResponseHeaders(200, response.length());
+                    try {
+                        response = processJsonRequest(jsonRequest);
+                        System.out.println("Sending JSON response: " + response);
+                        String encryptResponse = protectResponse(response);
+                        System.out.println("Encrypt Json: " + encryptResponse);
+                        //JsonObject jsonResponse = JsonParser.parseString(response).getAsJsonObject();
+                        
+                        //saveJsonToFile(jsonResponse, filename_db);
+                        exchange.sendResponseHeaders(200, encryptResponse.length());
 
                         try (OutputStream os = exchange.getResponseBody()) {
-                            os.write(response.getBytes(StandardCharsets.UTF_8));
+                            os.write(encryptResponse.getBytes(StandardCharsets.UTF_8));
                         } catch (IOException e) {
                             e.printStackTrace();
-                            }
-                        } catch ( Exception e) {
-                            e.printStackTrace();
                         }
-                    
-                    else {
-                        try {
-                            response = processJsonRequest(jsonRequest);
-                            String encryptResponse = protectResponse(response, "Bob");
-                            System.out.println("Sending JSON response: " + response);
-                            System.out.println("Encrypt Json: " + encryptResponse);
-                            //protectResponse(response, "Bob");
-                            //JsonObject jsonResponse = JsonParser.parseString(response).getAsJsonObject();
-                            
-                            //saveJsonToFile(jsonResponse, filename_db);
-                            exchange.sendResponseHeaders(200, encryptResponse.length());
-
-                            try (OutputStream os = exchange.getResponseBody()) {
-                                os.write(response.getBytes(StandardCharsets.UTF_8));
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }
-                        } catch ( Exception e) {
-                            e.printStackTrace();
-                        };
-                    }
+                    } catch ( Exception e) {
+                        e.printStackTrace();
+                    };
                 } catch ( Exception e) {
                             e.printStackTrace();
                 }
@@ -143,6 +125,21 @@ public class ApiMeditrack {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private static String protectResponse(String response) {
+        JsonObject input = JsonParser.parseString(response).getAsJsonObject();
+        PrivateKey privateKey;
+        PublicKey publicKey;
+        JsonObject output = new JsonObject();
+        try {
+            privateKey = readPrivateKey("keys/api.privkey");
+            publicKey = readPublicKey("keys/patient.pubkey");
+            output = SecureDocument.protectJson(input, publicKey, privateKey, "keys/secret.key");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return output.toString();
     }
 
     private static HttpsServer configureHttpsServer() throws IOException, NoSuchAlgorithmException, KeyStoreException, CertificateException, UnrecoverableKeyException, KeyManagementException {
@@ -219,18 +216,11 @@ public class ApiMeditrack {
                     break;
                 
                 case "getRegisters":
-                    //decrypt
-
                     payload = JsonParser.parseString(content.get("payload").getAsString()).getAsJsonObject();
-                    //read keys
-                    
-
                     String patient = payload.get("patientName").getAsString();
                     System.out.println("patientName from file: " + patient);
                     query = getPatientRegisters(patient);
-                    System.out.println("query: " + query);
-                    response =  sendRequestToDatabase(query);
-                    protectResponse(response, patient);
+                    response = sendRequestToDatabase(query);
                     break;
 
                 case "allowAccessToAllRegisters":
@@ -238,14 +228,14 @@ public class ApiMeditrack {
                     patient = payload.get("patientName").getAsString();
                     String doctor = payload.get("doctorName").getAsString();
                     query = allowAccessToAllRegisters(patient, doctor);
-                    response =  sendRequestToDatabase(query);
+                    response = sendRequestToDatabase(query);
                     break;
                 
                 case "deletePersonalInformation":
                     payload = JsonParser.parseString(file.get("payload").getAsString()).getAsJsonObject();
                     patient = payload.get("patientName").getAsString();
                     query = deletePersonalInformation(patient);
-                    response =  sendRequestToDatabase(query);
+                    response = sendRequestToDatabase(query);
                     break;
             }
         }

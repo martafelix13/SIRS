@@ -3,40 +3,25 @@ package pt.tecnico.meditrack;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.sql.Connection;
-import java.sql.Date;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
-import java.sql.SQLException;
 import java.sql.Statement;
-import java.sql.Time;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
-import javax.management.Query;
 import javax.net.ServerSocketFactory;
 import javax.net.ssl.SSLServerSocket;
 import javax.net.ssl.SSLServerSocketFactory;
@@ -52,12 +37,7 @@ public class Database {
         System.setProperty("javax.net.ssl.trustStore", "certificates/databasetruststore.jks");
         System.setProperty("javax.net.ssl.trustStorePassword", "changeme");
 
-
-            String query = readQueryFromFile("queries/getConsultationsRecords.sql");
-            String response = handleQuery(query);
-
-            System.out.println("response: " + response);
-        //startSecureSocketServer();
+        startSecureSocketServer();
     }
 
 
@@ -95,9 +75,7 @@ public class Database {
             //System.out.printf("server received %d bytes: %s%n", len, message);
 
             JsonObject clientJson = JsonParser.parseString(message).getAsJsonObject();
-            String queryPath = clientJson.get("value").getAsString();
-
-            String query = readQueryFromFile("queries/getConsultationsRecords.sql");
+            String query = clientJson.get("value").getAsString();
             String response = handleQuery(query);
 
             System.out.println("response: " + response);
