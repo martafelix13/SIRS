@@ -220,13 +220,19 @@ public class Client {
         }
 
         try {
-            String jsonRequest = jsonPayload.toString();
-            sendJsonRequestForAuth(jsonRequest,username,"patient");
-        } catch (IOException e) {
-            e.printStackTrace();
+           
+            String jsonRequest =  protectJsonClient(jsonPayload,"patient");
+            // Send the JSON request to the server
+            try {
+                sendJsonRequestForAuth(jsonRequest,username,"patient");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            
         } catch (Exception e) {
+            
             e.printStackTrace();
-        }     
+        }
     }
 
     private static void sendDoctorAuthenticationRequest(String username) {
@@ -251,14 +257,20 @@ public class Client {
             e.printStackTrace();
         }
 
-        try {
-            String jsonRequest = jsonPayload.toString();
-            sendJsonRequestForAuth(jsonRequest,username,"doctor");
-        } catch (IOException e) {
-            e.printStackTrace();
+         try {
+           
+            String jsonRequest =  protectJsonClient(jsonPayload,"doctor");
+            // Send the JSON request to the server
+            try {
+                sendJsonRequestForAuth(jsonRequest,username,"doctor");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            
         } catch (Exception e) {
+            
             e.printStackTrace();
-        }     
+        }
     }
 
 
@@ -282,16 +294,25 @@ public class Client {
 
         // Convert the payload to a JSON string and add it to the main JSON object
         jsonPayload.addProperty("payload", payload.toString());
+        
 
-        // Convert the main JSON object to a string
-        String jsonRequest = jsonPayload.toString();
-
-        // Send the JSON request to the server
+        //Load public key from /keys
+        
         try {
-            sendJsonRequest(jsonRequest);
-        } catch (IOException e) {
+            
+            String jsonRequest = protectJsonClient(jsonPayload,"patient");
+            // Send the JSON request to the server
+            try {
+                sendJsonRequest(jsonRequest);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            
+        } catch (Exception e) {
+            
             e.printStackTrace();
         }
+
     }
 
     private static void sendClientGiveDoctorAccessRequest(String patientName, String doctorName) {
@@ -309,12 +330,18 @@ public class Client {
         jsonPayload.addProperty("payload", payload.toString());
 
         // Convert the main JSON object to a string
-        String jsonRequest = jsonPayload.toString();
-
-        // Send the JSON request to the server
         try {
-            sendJsonRequest(jsonRequest);
-        } catch (IOException e) {
+            
+            String jsonRequest = protectJsonClient(jsonPayload,"patient");
+            // Send the JSON request to the server
+            try {
+                sendJsonRequest(jsonRequest);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            
+        } catch (Exception e) {
+            
             e.printStackTrace();
         }
     }
@@ -333,14 +360,20 @@ public class Client {
         jsonPayload.addProperty("payload", payload.toString());
 
         // Convert the main JSON object to a string
-        String jsonRequest = jsonPayload.toString();
-
-        // Send the JSON request to the server
         try {
-            sendJsonRequest(jsonRequest);
-        } catch (IOException e) {
+            
+            String jsonRequest = protectJsonClient(jsonPayload,"patient");
+            // Send the JSON request to the server
+            try {
+                sendJsonRequest(jsonRequest);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            
+        } catch (Exception e) {
+            
             e.printStackTrace();
-        }    
+        }
     }
     
 
@@ -359,12 +392,18 @@ public class Client {
         jsonPayload.addProperty("payload", payload.toString());
 
         // Convert the main JSON object to a string
-        String jsonRequest = jsonPayload.toString();
-
-        // Send the JSON request to the server
         try {
-            sendJsonRequest(jsonRequest);
-        } catch (IOException e) {
+            
+            String jsonRequest = protectJsonClient(jsonPayload,"doctor");
+            // Send the JSON request to the server
+            try {
+                sendJsonRequest(jsonRequest);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            
+        } catch (Exception e) {
+            
             e.printStackTrace();
         }
     }
@@ -388,12 +427,18 @@ public class Client {
         jsonPayload.addProperty("payload", payload.toString());
 
         // Convert the main JSON object to a string
-        String jsonRequest = jsonPayload.toString();
-
-        // Send the JSON request to the server
         try {
-            sendJsonRequest(jsonRequest);
-        } catch (IOException e) {
+            
+            String jsonRequest = protectJsonClient(jsonPayload,"doctor");
+            // Send the JSON request to the server
+            try {
+                sendJsonRequest(jsonRequest);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            
+        } catch (Exception e) {
+            
             e.printStackTrace();
         }
     }
@@ -413,12 +458,18 @@ public class Client {
         jsonPayload.addProperty("payload", payload.toString());
 
         // Convert the main JSON object to a string
-        String jsonRequest = jsonPayload.toString();
-
-        // Send the JSON request to the server
         try {
-            sendJsonRequest(jsonRequest);
-        } catch (IOException e) {
+            
+            String jsonRequest = protectJsonClient(jsonPayload,"doctor");
+            // Send the JSON request to the server
+            try {
+                sendJsonRequest(jsonRequest);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            
+        } catch (Exception e) {
+            
             e.printStackTrace();
         }
     }
@@ -438,13 +489,18 @@ public class Client {
         // Convert the payload to a JSON string and add it to the main JSON object
         jsonPayload.addProperty("payload", payload.toString());
 
-        // Convert the main JSON object to a string
-        String jsonRequest = jsonPayload.toString();
-
-        // Send the JSON request to the server
-        try {
-            sendJsonRequest(jsonRequest);
-        } catch (IOException e) {
+         try {
+           
+            
+            String jsonRequest =  protectJsonClient(jsonPayload,"patient");
+            // Send the JSON request to the server
+            try {
+                sendJsonRequestValidation(jsonRequest);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -544,6 +600,45 @@ public class Client {
                     response.append(responseLine.trim());
                 }
 
+                
+
+                System.out.println("Server Response: " + response.toString());
+            }
+            
+            //connection.disconnect();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            connection.disconnect();
+        }
+    }
+
+    private static void sendJsonRequestValidation(String jsonRequest) throws IOException {
+        URL url = new URL(API_URL);
+        HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
+
+        try {
+           
+            // Set up the HTTP request
+            connection.setRequestMethod("POST");
+            connection.setRequestProperty("Content-Type", "application/json");
+            //connection.setRequestProperty("Connection", " keep-alive");
+            connection.setDoOutput(true);
+
+            // Send the JSON request payload
+            try (OutputStream os = connection.getOutputStream()) {
+                byte[] input = jsonRequest.getBytes();
+                os.write(input, 0, input.length);
+            }
+
+            // Read the server's response
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream(), "utf-8"))) {
+                StringBuilder response = new StringBuilder();
+                String responseLine;
+                while ((responseLine = br.readLine()) != null) {
+                    response.append(responseLine.trim());
+                }
+
                 //check if response is true
                 checkresponse(response);
 
@@ -598,5 +693,41 @@ public class Client {
         X509EncodedKeySpec pubSpec = new X509EncodedKeySpec(pubEncoded);
         KeyFactory keyFactory = KeyFactory.getInstance("RSA");
         return keyFactory.generatePublic(pubSpec);
+    }
+
+
+    //// Protect JSON ////
+
+    private static String protectJsonClient (JsonObject jsonPayload, String user){
+        // get keys
+        PublicKey publicKey;
+        PrivateKey privateKey = null;
+        
+
+        try{
+             publicKey = readPublicKey("keys/api.pubkey");
+       
+            if (user.equals("patient")){
+                privateKey = readPrivateKey("keys/patient.privkey");
+            }
+            else if (user.equals("doctor")){
+                privateKey = readPrivateKey("keys/doctor.privkey");
+            } 
+            else{
+                System.out.println("Invalid user");
+            }
+            
+            String secretKey = "keys/secretKey.txt";
+            //  Protect the payload
+            return  SecureDocument.protectJson(jsonPayload, publicKey, privateKey, secretKey).toString();
+        }
+        catch (Exception e){
+        
+        }
+        
+        return null;
+            
+
+
     }
 }

@@ -291,7 +291,7 @@ public class SecureDocument {
     }
 
 
-	public static JsonObject protectJson(JsonObject input, JsonObject output, PublicKey publicKeyReceiver, PrivateKey privateKeySender, String secret_key) throws Exception {
+	public static JsonObject protectJson(JsonObject input, PublicKey publicKeyReceiver, PrivateKey privateKeySender, String secret_key) throws Exception {
 		
 		// Prepare the JSON content
 		JsonObject document = new JsonObject();
@@ -329,6 +329,40 @@ public class SecureDocument {
 
 		document.addProperty("digital-signature", digitalSignatureCipher_b64);
 		document.addProperty("token", createFreshnessToken());
+
+		return document;
+	}
+
+	public static JsonObject unprotectJson(JsonObject input, PrivateKey privateKeyReceiver, PublicKey publicKeySender) throws Exception {
+
+		JsonObject file = input;
+		JsonObject document = new JsonObject();
+
+		JsonArray file_values = file.get("value").getAsJsonArray() ;
+		String contentCipher = file_values.get(0).getAsString();
+		byte[] contentBytesCipher = Base64.getDecoder().decode(contentCipher);
+
+		String secret_key = file_values.get(1).getAsString();
+		byte[] secretKeyBytesCipher = Base64.getDecoder().decode(secret_key);
+
+		String signature = file.get("digital-signature").getAsString();
+
+		String freshnessToken = file.get("token").getAsString();
+
+		// get keys
+		PrivateKey privateKey = privateKeyReceiver;
+		PublicKey publicKey = publicKeySender;
+
+		byte[] secretKeyDecodedBytes = decryptRSAWithPrivateKey(secretKeyBytesCipher, privateKey);
+		Key secretKey = secretKeyBytesToLong(secretKeyDecodedBytes);
+
+		byte[] contentDecoded = decryptAES(contentBytesCipher, secretKey);
+		writeFile("keys/secret.key", secretKeyDecodedBytes);
+		//deleteFile("secret.key");
+
+		document.addProperty("content", new String(contentDecoded));
+		document.addProperty("digital-signature", signature);
+		document.addProperty("token", freshnessToken);
 
 		return document;
 	}
