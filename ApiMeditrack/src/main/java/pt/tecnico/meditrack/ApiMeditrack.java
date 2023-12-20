@@ -152,23 +152,35 @@ public class ApiMeditrack {
 
         return httpsServer;
     }
-    
 
 
     private static String processJsonRequest(JsonObject file) throws Exception {
         
-        String user = file.get("user").getAsString();
+        String pathToPrivateString = "./keys/api.privkey";
+        PrivateKey privKey = readPrivateKey(pathToPrivateString);
+        String pathToPublicString = "./keys/patient.pubkey";
+        PublicKey pubKey = readPublicKey(pathToPublicString);
+
+        file = SecureDocument.unprotectJson(file, privKey, pubKey);
+
+        System.out.println("Received JSON request unprotected: " + file.toString());
+        
+        //Get file content
+
+        JsonObject content = JsonParser.parseString(file.get("content").getAsString()).getAsJsonObject();
+
+        String user = content.get("user").getAsString();
         System.out.println("User from file: " + user);
         String response = "Internal server error";
         String query = "";
         if (user.equals(PATIENT)) {
 
-            String command = file.get("command").getAsString();
+            String command = content.get("command").getAsString();
             System.out.println("command from file: " + command);
 
             switch (command) {
                 case "authPatient":
-                    JsonObject payload = JsonParser.parseString(file.get("payload").getAsString()).getAsJsonObject();
+                    JsonObject payload = JsonParser.parseString(content.get("payload").getAsString()).getAsJsonObject();
                     //JsonObject payload = file.get("payload").getAsJsonObject();
                     String username = payload.get("username").getAsString();
                     String publicKeyString = payload.get("publicKey").getAsString();
@@ -177,7 +189,7 @@ public class ApiMeditrack {
                     break;
                 
                 case "validateAuth":
-                    payload = JsonParser.parseString(file.get("payload").getAsString()).getAsJsonObject();
+                    payload = JsonParser.parseString(content.get("payload").getAsString()).getAsJsonObject();
                     String challengeResponse = payload.get("challengeResponse").getAsString();
                     username = payload.get("username").getAsString();
                     response = validateAuth(username, challengeResponse);
@@ -185,7 +197,12 @@ public class ApiMeditrack {
                     break;
                 
                 case "getRegisters":
-                    payload = JsonParser.parseString(file.get("payload").getAsString()).getAsJsonObject();
+                    //decrypt
+
+                    payload = JsonParser.parseString(content.get("payload").getAsString()).getAsJsonObject();
+                    //read keys
+                    
+
                     String patient = payload.get("patientName").getAsString();
                     System.out.println("patientName from file: " + patient);
                     query = getPatientRegisters(patient);
@@ -214,13 +231,13 @@ public class ApiMeditrack {
 
         if (user.equals(DOCTOR)) {
 
-            String command = file.get("command").getAsString();
+            String command = content.get("command").getAsString();
             System.out.println("command from file: " + command);
 
             switch (command) {
 
                 case "authDoctor":
-                    JsonObject payload = JsonParser.parseString(file.get("payload").getAsString()).getAsJsonObject();
+                    JsonObject payload = JsonParser.parseString(content.get("payload").getAsString()).getAsJsonObject();
                     String username = payload.get("username").getAsString();
                     String publicKeyString = payload.get("publicKey").getAsString();
                     response = handleAuthString(username, publicKeyString);
@@ -228,7 +245,7 @@ public class ApiMeditrack {
                     break;
 
                 case "getPatientsConsultations":
-                    payload = JsonParser.parseString(file.get("payload").getAsString()).getAsJsonObject();
+                    payload = JsonParser.parseString(content.get("payload").getAsString()).getAsJsonObject();
                     String patient = payload.get("patientName").getAsString();
                     String doctor = payload.get("doctorName").getAsString();
                     query = getPatientsConsultations(doctor, patient);
@@ -237,7 +254,7 @@ public class ApiMeditrack {
                     break;
             
                 case "createConsultation":
-                    payload = JsonParser.parseString(file.get("payload").getAsString()).getAsJsonObject();
+                    payload = JsonParser.parseString(content.get("payload").getAsString()).getAsJsonObject();
                     patient = payload.get("patientName").getAsString();
                     String date = payload.get("date").getAsString();
                     doctor = payload.get("doctorName").getAsString();
@@ -249,7 +266,7 @@ public class ApiMeditrack {
                     break;
                 
                 case "changeMedicalSpeciality":
-                    payload = JsonParser.parseString(file.get("payload").getAsString()).getAsJsonObject();
+                    payload = JsonParser.parseString(content.get("payload").getAsString()).getAsJsonObject();
                     doctor = payload.get("doctorName").getAsString();
                     medicalSpeciality = payload.get("newMedicalSpeciality").getAsString();
                     query = changeMedicalSpeciality(doctor, medicalSpeciality);
@@ -260,7 +277,7 @@ public class ApiMeditrack {
         return response;
     }
 
-    private static void protectResponse(String response, String username) {
+    /*private static void protectResponse(String response, String username) {
         try {
             System.out.println("Response: " + response);
             String pathToPrivateString = "./keys/api.privkey";
@@ -280,7 +297,7 @@ public class ApiMeditrack {
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
+    }*/
     
     private static void configSecureSockets(){
         System.setProperty("javax.net.ssl.keyStore", "certificates/api.p12");
@@ -480,7 +497,7 @@ public class ApiMeditrack {
             Files.write(Paths.get(filePath), keyBytes);
         }
 
-    private static void saveJsonToFile(JsonObject document, String output_filename) throws IOException {
+    private static void saversJsonToFile(JsonObject document, String output_filename) throws IOException {
             try (FileWriter fileWriter = new FileWriter(output_filename)) {
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
             gson.toJson(document, fileWriter);
