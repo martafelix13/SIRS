@@ -490,8 +490,6 @@ public class Client {
         jsonPayload.addProperty("payload", payload.toString());
 
          try {
-           
-            
             String jsonRequest =  protectJsonClient(jsonPayload,"patient");
             // Send the JSON request to the server
             try {
@@ -536,39 +534,36 @@ public class Client {
 
                 JsonObject responseJson =  JsonParser.parseString(response.toString()).getAsJsonObject();
 
-                PrivateKey privKey = readPrivateKey("keys/patient.privkey");
                 PublicKey pubKey = readPublicKey("keys/api.pubkey");
+                PrivateKey privKey = null;
+    
+                if (user.equals("patient")){
+                    privKey = readPrivateKey("keys/patient.privkey");
+                }
+                else if (user.equals("doctor")){
+                    privKey = readPrivateKey("keys/doctor.privkey");
+                }
                 
                 JsonObject decryptJson = SecureDocument.unprotectJson(responseJson, privKey, pubKey);
-                System.out.println(decryptJson.toString());
+                System.out.println("Decrypt Json:" + decryptJson.toString());
 
 
                 // Get the payload from the response
-                JsonObject jsonResponse = decryptJson.get("content").getAsJsonObject();
+                String stringFullResponse = decryptJson.get("content").getAsString();
+                JsonObject jsonResponse =  JsonParser.parseString(stringFullResponse).getAsJsonObject();
                 String challenge = jsonResponse.get("challenge").getAsString();
-                System.out.println(decryptJson.toString());
+                System.out.println("Challenge:" + decryptJson.toString());
 
 
                 // Decrypting the challenge
                 byte[] dencryptChallenge = Base64.getDecoder().decode(challenge);
-                PrivateKey privateKey = null;
-                if (user.equals("patient")){
-                    privateKey = readPrivateKey("keys/patient.privkey");
-                }
-                else if (user.equals("doctor")){
-                    privateKey = readPrivateKey("keys/doctor.privkey");
-                }
-                else{
-                    
-                    System.out.println("Invalid user");
-
-                }
-                byte[] challengeResponse = decryptRSAWithPrivateKey(dencryptChallenge, privateKey);
+                byte[] challengeResponse = decryptRSAWithPrivateKey(dencryptChallenge, privKey);
                 System.out.println("Decrypted Challenge: " + new String(challengeResponse));
 
                 // Send the challenge response to the server
                 sendChallengeResponse(username, new String(challengeResponse));
-                //decrypt payload with private key
+
+
                 
             }
             
