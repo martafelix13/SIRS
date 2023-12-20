@@ -75,7 +75,7 @@ public class Database {
             while (len == -1) { len = is.read(data);}
 
             String message = new String(data, 0, len);
-            System.out.printf("server received %d bytes: %s%n", len, message);
+            //System.out.printf("server received %d bytes: %s%n", len, message);
 
             JsonObject clientJson = JsonParser.parseString(message).getAsJsonObject();
             String query = clientJson.get("value").getAsString();
@@ -83,7 +83,7 @@ public class Database {
             String response = handleQuery(query);
             System.out.println("response: " + response);
 
-            os.write(response.getBytes(), 0, response.getBytes().length);
+            os.write(response.getBytes("UTF-8"), 0, response.getBytes("UTF-8").length);
             os.flush();
         } catch (IOException e) {
             System.out.println("Error handling connection: " + e.getMessage());

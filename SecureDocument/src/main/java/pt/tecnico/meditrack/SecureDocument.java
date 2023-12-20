@@ -5,6 +5,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import static javax.xml.bind.DatatypeConverter.printHexBinary;
 
@@ -289,6 +290,49 @@ public class SecureDocument {
         }
     }
 
+
+	public static JsonObject protectJson(JsonObject input, JsonObject output, PublicKey publicKeyReceiver, PrivateKey privateKeySender, String secret_key) throws Exception {
+		
+		// Prepare the JSON content
+		JsonObject document = new JsonObject();
+		JsonArray valueArray = new JsonArray();
+
+		//JsonObject content = fillJsonContent();
+		String jsonContent = input.toString();
+		//JsonObject content = new Gson().fromJson(jsonContent, JsonObject.class);
+		byte[] jsonBytes = jsonContent.getBytes();
+
+		
+		// Read keys
+		PublicKey publicKey = publicKeyReceiver;
+		PrivateKey privateKey = privateKeySender;
+		Key secretKey = generateSecretKey(secret_key);
+		//KeyPair keyPair = readKeyPair(public_key, private_key);
+
+		// Encrypt content
+		byte[] contentBytes = encryptContentAES(jsonBytes, secretKey);
+		String contentBytes_b64 = Base64.getEncoder().encodeToString(contentBytes);
+		valueArray.add(contentBytes_b64);
+
+		// Encrypt the secret key with the public target key
+		byte[] secretKeyFile = readFile(secret_key);
+		byte[] secretKeyCipher = encryptContentRSAWithPublicKey(secretKeyFile, publicKey);
+		String secretKeyCipher_b64 = Base64.getEncoder().encodeToString(secretKeyCipher);
+		valueArray.add(secretKeyCipher_b64);
+
+		document.add("value", valueArray);
+
+		// Make digital signature
+		byte[] digitalSignatureBytes = makeDigitalSignature(jsonBytes, privateKey);
+		System.out.println("Original Signature size: " + digitalSignatureBytes.length + " bytes");
+		String digitalSignatureCipher_b64 = Base64.getEncoder().encodeToString(digitalSignatureBytes);
+
+		document.addProperty("digital-signature", digitalSignatureCipher_b64);
+		document.addProperty("token", createFreshnessToken());
+
+		return document;
+	}
+
     public static void unprotect(String input_filename, String output_filename, String private_key) throws Exception {
 
 		JsonObject file = readJsonFile(input_filename);
@@ -369,7 +413,7 @@ public class SecureDocument {
     }
 
 	public static void main(String args[]) throws Exception {
-		// command input_filename <output_filename>
+		// command <input_filename> <output_filename>
 		if (args.length < 1) {
 			System.out.println("Please provide a command.");
 			return;

@@ -1,35 +1,23 @@
 package pt.tecnico.meditrack;
-import pt.tecnico.meditrack.SecureDocument;
-
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.net.Socket;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Base64;
-import java.util.Scanner;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
-import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpsServer;
 
 import javax.crypto.BadPaddingException;
@@ -37,27 +25,29 @@ import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 import javax.net.SocketFactory;
-import javax.sound.sampled.Port;
 import javax.net.ssl.*;
 
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.security.InvalidKeyException;
+import java.security.Key;
 import java.security.KeyFactory;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 
-import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.HttpsConfigurator;
-import com.sun.net.httpserver.HttpsParameters;
-import com.sun.net.httpserver.Headers;
 
 
 
@@ -72,8 +62,13 @@ public class ApiMeditrack {
     private final static String DOCTOR = "doctor";
     private final static String SOS = "sos";
 
+    final static String filename_db="db.json";
+    final static String filename_client="response.json";
+
     private final static int CHALLENGE_SIZE = 16;
 
+    private static Map<String, String> clientChallenges = new HashMap<>();
+    private static Map<String, PublicKey> clientPublicKeys = new HashMap<>();
 
     public static void main(String[] args) throws NoSuchAlgorithmException {
         try {
@@ -92,6 +87,12 @@ public class ApiMeditrack {
 
                     try {
                         response = processJsonRequest(jsonRequest);
+                        //protectResponse(response);
+                        System.out.println("Sending JSON response: " + response);
+                        //protectResponse(response, "Bob");
+                        //JsonObject jsonResponse = JsonParser.parseString(response).getAsJsonObject();
+                        
+                        //saveJsonToFile(jsonResponse, filename_db);
                         exchange.sendResponseHeaders(200, response.length());
 
                         try (OutputStream os = exchange.getResponseBody()) {
@@ -172,9 +173,17 @@ public class ApiMeditrack {
                     String username = payload.get("username").getAsString();
                     String publicKeyString = payload.get("publicKey").getAsString();
                     response = handleAuthString(username, publicKeyString);
-
+                    System.out.println(response);
                     break;
-
+                
+                case "validateAuth":
+                    payload = JsonParser.parseString(file.get("payload").getAsString()).getAsJsonObject();
+                    String challengeResponse = payload.get("challengeResponse").getAsString();
+                    username = payload.get("username").getAsString();
+                    response = validateAuth(username, challengeResponse);
+                    System.out.println(response);
+                    break;
+                
                 case "getRegisters":
                     payload = JsonParser.parseString(file.get("payload").getAsString()).getAsJsonObject();
                     String patient = payload.get("patientName").getAsString();
@@ -182,6 +191,8 @@ public class ApiMeditrack {
                     query = getPatientRegisters(patient);
                     System.out.println("query: " + query);
                     response =  sendRequestToDatabase(query);
+
+                    //protectResponse(response, patient);
                     break;
 
                 case "allowAccessToAllRegisters":
@@ -207,12 +218,20 @@ public class ApiMeditrack {
             System.out.println("command from file: " + command);
 
             switch (command) {
-                case "getPatientsConsultations":
+
+                case "authDoctor":
                     JsonObject payload = JsonParser.parseString(file.get("payload").getAsString()).getAsJsonObject();
+                    String username = payload.get("username").getAsString();
+                    String publicKeyString = payload.get("publicKey").getAsString();
+                    response = handleAuthString(username, publicKeyString);
+                    System.out.println(response);
+                    break;
+
+                case "getPatientsConsultations":
+                    payload = JsonParser.parseString(file.get("payload").getAsString()).getAsJsonObject();
                     String patient = payload.get("patientName").getAsString();
                     String doctor = payload.get("doctorName").getAsString();
                     query = getPatientsConsultations(doctor, patient);
-
                     System.out.println("query: " + query);
                     response =  sendRequestToDatabase(query);
                     break;
@@ -241,6 +260,28 @@ public class ApiMeditrack {
         return response;
     }
 
+    private static void protectResponse(String response, String username) {
+        try {
+            System.out.println("Response: " + response);
+            String pathToPrivateString = "./keys/api.privkey";
+
+            JsonObject clientResponse = new JsonObject();
+
+
+        
+            //String pathToPrivateString = "./keys/api.privkey";
+            JsonObject jsonResponse = JsonParser.parseString(response).getAsJsonObject();
+            //saveJsonToFile(jsonResponse, "db.json");
+
+            PublicKey pubKey = clientPublicKeys.get(username);
+            PrivateKey privKey = readPrivateKey(pathToPrivateString);
+
+            SecureDocument.protectJson(jsonResponse, clientResponse, pubKey , privKey, "keys/secret.key");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    
     private static void configSecureSockets(){
         System.setProperty("javax.net.ssl.keyStore", "certificates/api.p12");
         System.setProperty("javax.net.ssl.keyStorePassword", "changeme");
@@ -249,6 +290,7 @@ public class ApiMeditrack {
     }	
 
     private static String sendRequestToDatabase(String query){
+        
         SocketFactory factory = SSLSocketFactory.getDefault();
         try (SSLSocket socket = (SSLSocket) factory.createSocket(ADDRESS, PORT)) {
 
@@ -261,14 +303,16 @@ public class ApiMeditrack {
             requestJson.addProperty("value", query);
     
             OutputStream os = new BufferedOutputStream(socket.getOutputStream());
-            os.write(requestJson.toString().getBytes());
+            os.write(requestJson.toString().getBytes("UTF-8"));
             os.flush();
 
             InputStream is = new BufferedInputStream(socket.getInputStream());
             byte[] data = new byte[2048];
-            int len = is.read(data);
+            is.read(data);
 
-            String response = new String(data);
+            String response = new String(data, StandardCharsets.UTF_8);
+
+            System.out.println("Received response: " + response);
 
             return response;
 
@@ -279,14 +323,70 @@ public class ApiMeditrack {
     }
 
     private static String handleAuthString(String username, String publicKeyString) throws NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
-        
-        byte[] keyBytes = Base64.getDecoder().decode(publicKeyString);
-        JsonObject response = new JsonObject();
-        response.addProperty("challenge", "2");
-        return response.toString();
-    } 
+        byte[] challengeBytes = generateRandomString(CHALLENGE_SIZE);
+        String challenge = Base64.getEncoder().encodeToString(challengeBytes);
+        System.out.println("Original Challenge: " + challenge);
+        clientChallenges.put(username, challenge);
 
-    public static byte[] generateRandomString(int length) {
+        //string to byte[]
+        byte[] keyBytes = Base64.getDecoder().decode(publicKeyString);
+  
+        X509EncodedKeySpec publicKey = new X509EncodedKeySpec(keyBytes);
+        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+        PublicKey pubKey = keyFactory.generatePublic(publicKey);
+
+        try {
+            saveKey(pubKey, "./keys/patient.pubkey");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        try {
+
+            // Encrypting the challenge
+            challengeBytes = challenge.getBytes(); // Replace with your actual challenge
+            byte[] encryptChallenge = encryptContentRSAWithPublicKey(challengeBytes, pubKey);
+            String encryptedChallenge = Base64.getEncoder().encodeToString(encryptChallenge);
+            System.out.println("Encrypted Challenge: " + encryptedChallenge);
+
+            
+
+            ///TESTE///
+            JsonObject response = new JsonObject();
+            response.addProperty("challenge", encryptedChallenge);
+
+            return response.toString();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "Authentication process failed";
+        }
+    }
+ 
+
+    private static String validateAuth(String username, String challengeResponse) {
+        JsonObject responseObject = new JsonObject();
+        
+        String challenge = clientChallenges.get(username);
+
+        System.out.println("Challenge: " + challenge);
+        System.out.println("Challenge Response: " + challengeResponse);
+        System.out.println("challenge.equals(challengeResponse) " + challenge.equals(challengeResponse));
+        if (challenge != null && challenge.equals(challengeResponse)) {
+            responseObject.addProperty("validation", true);
+        } else {
+            responseObject.addProperty("validation", false);
+            clientPublicKeys.remove(username);
+        }
+
+        System.out.println("Clients Keys " + clientPublicKeys.toString());
+        System.out.println("Clients Challenges " + clientChallenges.toString());
+        return responseObject.toString();
+    }
+
+
+
+    private static byte[] generateRandomString(int length) {
         SecureRandom secureRandom = new SecureRandom();
         byte[] randomBytes = new byte[length];
         secureRandom.nextBytes(randomBytes);
@@ -332,4 +432,60 @@ public class ApiMeditrack {
     }
 
 
+
+    private static byte [] decryptRSAWithPrivateKey(byte[] content, PrivateKey privateKey) throws Exception{
+        Cipher cipher = Cipher.getInstance("RSA");
+        cipher.init(Cipher.DECRYPT_MODE, privateKey);
+        return cipher.doFinal(content);
+    }
+
+	private static byte[] encryptContentRSAWithPublicKey(byte[] content, PublicKey publicKey) throws Exception {
+		Cipher cipher = Cipher.getInstance("RSA");
+		cipher.init(Cipher.ENCRYPT_MODE, publicKey);
+		return cipher.doFinal(content);
+	}
+
+
+    private static PrivateKey readPrivateKey(String privateKeyPath) throws Exception {
+        byte[] privEncoded = readFile(privateKeyPath);
+        PKCS8EncodedKeySpec privSpec = new PKCS8EncodedKeySpec(privEncoded);
+        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+        return keyFactory.generatePrivate(privSpec);
+    }
+
+    private static PublicKey readPublicKey(String publicKeyPath) throws Exception {
+        byte[] pubEncoded = readFile(publicKeyPath);
+        X509EncodedKeySpec pubSpec = new X509EncodedKeySpec(pubEncoded);
+        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+        return keyFactory.generatePublic(pubSpec);
+    }
+
+    private static void writeFile(String path, byte[] content) throws FileNotFoundException, IOException {
+		FileOutputStream fos = new FileOutputStream(path);
+		fos.write(content);
+		fos.close();
+	}
+
+    private static byte[] readFile(String path) throws FileNotFoundException, IOException {
+		FileInputStream fis = new FileInputStream(path);
+		byte[] content = new byte[fis.available()];
+		fis.read(content);
+		fis.close();
+		return content;
+	}
+
+
+    private static void saveKey(Key key, String filePath) throws Exception {
+            byte[] keyBytes = key.getEncoded();
+            Files.write(Paths.get(filePath), keyBytes);
+        }
+
+    private static void saveJsonToFile(JsonObject document, String output_filename) throws IOException {
+            try (FileWriter fileWriter = new FileWriter(output_filename)) {
+            Gson gson = new GsonBuilder().setPrettyPrinting().create();
+            gson.toJson(document, fileWriter);
+        } catch (IOException e) {
+            e.printStackTrace();
+        };
+    } 
 }

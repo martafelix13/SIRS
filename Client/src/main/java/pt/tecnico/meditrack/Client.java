@@ -1,32 +1,35 @@
 package pt.tecnico.meditrack;
 //import pt.tecnico.meditrack.SecureDocument;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-
-import java.security.PublicKey;
-import java.sql.Connection;
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.security.KeyFactory;
+import java.security.PrivateKey;
+import java.security.PublicKey;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 import java.util.Scanner;
+
+import javax.crypto.Cipher;
 import javax.net.ssl.HttpsURLConnection;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 public class Client {
     private static final String API_URL = "https://localhost:433/api";
 
+
+    private static boolean authenticated = false;
+
     public static void main(String[] args) {
+        
 
         System.setProperty("javax.net.ssl.keyStore", "certificates/client.p12");
         System.setProperty("javax.net.ssl.keyStorePassword", "changeme");
@@ -49,8 +52,11 @@ public class Client {
                         System.out.println("Enter your username: ");
                         String username = scanner.next();
                         
-                        sendClientAuthenticationRequest(username);
+                        sendPatientAuthenticationRequest(username);
+                        while (!authenticated) {
                             
+                        }
+                        authenticated = false;
                         printClientMenu();
                         int clientChoice = getUserChoice(scanner);
                         switch (clientChoice) {
@@ -87,6 +93,14 @@ public class Client {
                     
                 case 2:
                     while (true){
+                        System.out.println("Enter your username: ");
+                        String username = scanner.next();
+                        
+                        sendDoctorAuthenticationRequest(username);
+                        while (!authenticated) {
+                            
+                        }
+                        authenticated = false;
                         printDoctorMenu();
                         int doctorChoice = getUserChoice(scanner);
                         switch (doctorChoice) {
@@ -183,7 +197,7 @@ public class Client {
     //////////////// JSON Requests ////////////////
 
 
-    private static void sendClientAuthenticationRequest(String username) {
+    private static void sendPatientAuthenticationRequest(String username) {
 
         JsonObject jsonPayload = new JsonObject();
         jsonPayload.addProperty("user", "patient");
@@ -195,9 +209,11 @@ public class Client {
         //load public key from /keys
 
         try {
-            byte[] publicKeyBytes = readFile("pub/patient.pubkey");           
-            String publicKeyString =  Base64.getEncoder().encodeToString(publicKeyBytes);
-            payload.addProperty("publicKey", publicKeyString);
+            byte[] publicKeyBytes = readFile("keys/patient.pubkey");   
+
+            // Base64 encode the key
+            String base64EncodedKey = Base64.getEncoder().encodeToString(publicKeyBytes);
+            payload.addProperty("publicKey", base64EncodedKey);
             jsonPayload.addProperty("payload", payload.toString());
         } catch (Exception e) {
             e.printStackTrace();
@@ -205,11 +221,46 @@ public class Client {
 
         try {
             String jsonRequest = jsonPayload.toString();
-            sendJsonRequest(jsonRequest);
+            sendJsonRequestForAuth(jsonRequest,username,"patient");
         } catch (IOException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
             e.printStackTrace();
         }     
     }
+
+    private static void sendDoctorAuthenticationRequest(String username) {
+
+        JsonObject jsonPayload = new JsonObject();
+        jsonPayload.addProperty("user", "doctor");
+        jsonPayload.addProperty("command", "authDoctor");
+
+        JsonObject payload = new JsonObject();
+        payload.addProperty("username", username);
+
+        //load public key from /keys
+
+        try {
+            byte[] publicKeyBytes = readFile("keys/doctor.pubkey");   
+
+            // Base64 encode the key
+            String base64EncodedKey = Base64.getEncoder().encodeToString(publicKeyBytes);
+            payload.addProperty("publicKey", base64EncodedKey);
+            jsonPayload.addProperty("payload", payload.toString());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        try {
+            String jsonRequest = jsonPayload.toString();
+            sendJsonRequestForAuth(jsonRequest,username,"doctor");
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }     
+    }
+
 
     private static byte[] readFile(String path) throws FileNotFoundException, IOException {
 		FileInputStream fis = new FileInputStream(path);
@@ -372,6 +423,101 @@ public class Client {
         }
     }
 
+
+    private static void sendChallengeResponse(String username, String challengeResponse) {
+        // Construct your JSON request payload
+        JsonObject jsonPayload = new JsonObject();
+        jsonPayload.addProperty("user", "patient");
+        jsonPayload.addProperty("command", "validateAuth");
+
+        // Create a nested JSON object for the payload
+        JsonObject payload = new JsonObject();
+        payload.addProperty("username", username);
+        payload.addProperty("challengeResponse", challengeResponse);
+
+        // Convert the payload to a JSON string and add it to the main JSON object
+        jsonPayload.addProperty("payload", payload.toString());
+
+        // Convert the main JSON object to a string
+        String jsonRequest = jsonPayload.toString();
+
+        // Send the JSON request to the server
+        try {
+            sendJsonRequest(jsonRequest);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    //////////////// JSON Requests for Auth ////////////////
+
+    private static void sendJsonRequestForAuth(String jsonRequest, String username, String user) throws Exception {
+        URL url = new URL(API_URL);
+        HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
+
+        try {
+           
+            // Set up the HTTP request
+            connection.setRequestMethod("POST");
+            connection.setRequestProperty("Content-Type", "application/json");
+            connection.setRequestProperty("Connection", " keep-alive");
+            connection.setDoOutput(true);
+
+            // Send the JSON request payload
+            try (OutputStream os = connection.getOutputStream()) {
+                byte[] input = jsonRequest.getBytes();
+                os.write(input, 0, input.length);
+            }
+
+            // Read the server's response
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream(), "utf-8"))) {
+                StringBuilder response = new StringBuilder();
+                String responseLine;
+                while ((responseLine = br.readLine()) != null) {
+                    response.append(responseLine.trim());
+                }
+                System.out.println(response.toString());
+
+
+                // Get the payload from the response
+                JsonObject jsonResponse = JsonParser.parseString(response.toString()).getAsJsonObject();
+                String challenge = jsonResponse.get("challenge").getAsString();
+
+                // Decrypting the challenge
+                byte[] dencryptChallenge = Base64.getDecoder().decode(challenge);
+                PrivateKey privateKey = null;
+                if (user.equals("patient")){
+                    privateKey = readPrivateKey("keys/patient.privkey");
+                }
+                else if (user.equals("doctor")){
+                    privateKey = readPrivateKey("keys/doctor.privkey");
+                }
+                else{
+                    
+                    System.out.println("Invalid user");
+
+                }
+                byte[] challengeResponse = decryptRSAWithPrivateKey(dencryptChallenge, privateKey);
+                System.out.println("Decrypted Challenge: " + new String(challengeResponse));
+
+                // Send the challenge response to the server
+                sendChallengeResponse(username, new String(challengeResponse));
+                //decrypt payload with private key
+                
+            }
+            
+            //connection.disconnect();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            connection.disconnect();
+        }
+    }
+
+    
+
+    //////////////// JSON Requests ////////////////
+
     private static void sendJsonRequest(String jsonRequest) throws IOException {
         URL url = new URL(API_URL);
         HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
@@ -397,6 +543,10 @@ public class Client {
                 while ((responseLine = br.readLine()) != null) {
                     response.append(responseLine.trim());
                 }
+
+                //check if response is true
+                checkresponse(response);
+
                 System.out.println("Server Response: " + response.toString());
             }
             
@@ -406,5 +556,47 @@ public class Client {
         } finally {
             connection.disconnect();
         }
+    }
+
+    public static void checkresponse(StringBuilder response){
+        JsonObject jsonResponse = JsonParser.parseString(response.toString()).getAsJsonObject();
+        String response1 = jsonResponse.get("validation").getAsString();
+        if(response1.equals("true")){
+            System.out.println("Authentication successful");
+            authenticated = true;
+        }
+        else{
+            System.out.println("Operation failed");
+        }
+    }
+
+    //////////////// Decryption ////////////////
+
+    private static byte [] decryptRSAWithPrivateKey(byte[] content, PrivateKey privateKey) throws Exception{
+
+    Cipher cipher = Cipher.getInstance("RSA");
+    cipher.init(Cipher.DECRYPT_MODE, privateKey);
+    return cipher.doFinal(content);
+    }
+
+    private static PrivateKey getRSAPrivateKey(String key) throws Exception {
+        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+        byte[] keyBytes = Base64.getDecoder().decode(key);
+        PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(keyBytes);
+        return keyFactory.generatePrivate(spec);
+    }
+
+       private static PrivateKey readPrivateKey(String privateKeyPath) throws Exception {
+        byte[] privEncoded = readFile(privateKeyPath);
+        PKCS8EncodedKeySpec privSpec = new PKCS8EncodedKeySpec(privEncoded);
+        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+        return keyFactory.generatePrivate(privSpec);
+    }
+
+    private static PublicKey readPublicKey(String publicKeyPath) throws Exception {
+        byte[] pubEncoded = readFile(publicKeyPath);
+        X509EncodedKeySpec pubSpec = new X509EncodedKeySpec(pubEncoded);
+        KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+        return keyFactory.generatePublic(pubSpec);
     }
 }
