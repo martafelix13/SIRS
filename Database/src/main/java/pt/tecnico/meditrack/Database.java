@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
@@ -30,6 +31,7 @@ import javax.net.ssl.SSLServerSocketFactory;
 public class Database {
 
     private final static int PORT = 3306;
+
 
     public static void main(String args[]) throws IOException {
         System.setProperty("javax.net.ssl.keyStore", "certificates/database.p12");
@@ -141,7 +143,14 @@ public class Database {
             ResultSet resultSet = statement.executeQuery(query)) {
 
             List<Map<String, Object>> resultList = convertResultSetToMapList(resultSet);
-            jsonResult = convertMapListToJson(resultList);
+
+            if (resultList.size() == 1) {
+                Map<String, Object> result = resultList.get(0);
+                jsonResult = convertMapToJson(result);
+                System.out.println(jsonResult);
+            } else {
+                jsonResult = convertMapListToJson(resultList);
+            }
 
             System.out.println(jsonResult);
                 
@@ -155,6 +164,11 @@ public class Database {
         return jsonResult;
     }
 
+    public static String convertMapToJson(Map<String, Object> map) {
+        Gson gson = new Gson();
+        String json = gson.toJson(map);
+        return json;
+    }
 
     public static int updateData(String query) throws IOException {
         String jdbcUrl = "jdbc:sqlite:src/main/java/pt/tecnico/meditrack/meditrack.db";

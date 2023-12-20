@@ -22,6 +22,8 @@ import javax.net.ssl.HttpsURLConnection;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+
+import netscape.javascript.JSException;
 public class Client {
     private static final String API_URL = "https://localhost:433/api";
 
@@ -493,7 +495,7 @@ public class Client {
             String jsonRequest =  protectJsonClient(jsonPayload,"patient");
             // Send the JSON request to the server
             try {
-                sendJsonRequestValidation(jsonRequest);
+                sendJsonRequestValidation(jsonRequest, "patient");
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -534,26 +536,25 @@ public class Client {
 
                 JsonObject responseJson =  JsonParser.parseString(response.toString()).getAsJsonObject();
 
-                PublicKey pubKey = readPublicKey("keys/api.pubkey");
+               //decrypt the response
+                JsonObject decryptJson = unprotectJsonClient(responseJson,user);
+
+                JsonObject content = JsonParser.parseString(decryptJson.get("content").getAsString()).getAsJsonObject();
+
+                // Get the payload from the response
+                
+                
+                String challenge = content.get("challenge").getAsString();
+                System.out.println("Challenge:" + challenge);
+
                 PrivateKey privKey = null;
-    
+                
                 if (user.equals("patient")){
                     privKey = readPrivateKey("keys/patient.privkey");
                 }
                 else if (user.equals("doctor")){
                     privKey = readPrivateKey("keys/doctor.privkey");
-                }
-                
-                JsonObject decryptJson = SecureDocument.unprotectJson(responseJson, privKey, pubKey);
-                System.out.println("Decrypt Json:" + decryptJson.toString());
-
-
-                // Get the payload from the response
-                String stringFullResponse = decryptJson.get("content").getAsString();
-                JsonObject jsonResponse =  JsonParser.parseString(stringFullResponse).getAsJsonObject();
-                String challenge = jsonResponse.get("challenge").getAsString();
-                System.out.println("Challenge:" + decryptJson.toString());
-
+                } 
 
                 // Decrypting the challenge
                 byte[] dencryptChallenge = Base64.getDecoder().decode(challenge);
@@ -618,7 +619,7 @@ public class Client {
         }
     }
 
-    private static void sendJsonRequestValidation(String jsonRequest) throws IOException {
+    private static void sendJsonRequestValidation(String jsonRequest, String user) throws IOException {
         URL url = new URL(API_URL);
         HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
 
@@ -643,9 +644,19 @@ public class Client {
                 while ((responseLine = br.readLine()) != null) {
                     response.append(responseLine.trim());
                 }
+                
+                JsonObject responseJson =  JsonParser.parseString(response.toString()).getAsJsonObject();
 
+               //decrypt the response
+                JsonObject decryptJson = unprotectJsonClient(responseJson,user);
+
+                JsonObject content = JsonParser.parseString(decryptJson.get("content").getAsString()).getAsJsonObject();
+
+                // content to String
+                StringBuilder contentString = new StringBuilder();
+                contentString.append(content.toString());
                 //check if response is true
-                checkresponse(response);
+                checkresponse(contentString);
 
                 System.out.println("Server Response: " + response.toString());
             }
@@ -731,8 +742,40 @@ public class Client {
         }
         
         return null;
-            
+        
 
+    }
+
+    // Unprotect JSON //
+
+    private static JsonObject unprotectJsonClient (JsonObject jsonPayload, String user){
+        // get keys
+        PublicKey publicKey;
+        PrivateKey privateKey = null;
+        
+
+        try{
+             publicKey = readPublicKey("keys/api.pubkey");
+       
+            if (user.equals("patient")){
+                privateKey = readPrivateKey("keys/patient.privkey");
+            }
+            else if (user.equals("doctor")){
+                privateKey = readPrivateKey("keys/doctor.privkey");
+            } 
+            else{
+                System.out.println("Invalid user");
+            }
+            
+            
+            return  SecureDocument.unprotectJson(jsonPayload, privateKey, publicKey);
+        }
+        catch (Exception e){
+        
+        }
+        
+        return null;
+        
 
     }
 }
