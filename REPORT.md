@@ -76,7 +76,7 @@ For the communications between the Client and the API we used HTTPS connections 
 
 #### 2.3.1. Challenge Overview
 
-Out challenge consisted on the emergency scenario.
+Our challenge consisted on the emergency scenario.
 In the regular case, a doctor would only be able to access the basic patients informations and the consultations that where given by him or allowed by the patient. Although this limitation should be able to be overwritten in a emergency. In this very particular moments the doctos is able to access all patients information, without needing their previous authorization.
 
 #### 2.3.2. Attacker Model
