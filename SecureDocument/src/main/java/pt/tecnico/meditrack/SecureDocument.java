@@ -226,7 +226,7 @@ public class SecureDocument {
 
         SecureRandom random = SecureRandom.getInstance("SHA1PRNG");
 
-        System.out.println("Generating random byte array ...");
+        //System.out.println("Generating random byte array ...");
 
         final byte array[] = new byte[32];
         random.nextBytes(array);
@@ -277,7 +277,7 @@ public class SecureDocument {
 
         // Make digital signature
         byte[] digitalSignatureBytes = makeDigitalSignature(jsonBytes, privateKey);
-		System.out.println("Original Signature size: " + digitalSignatureBytes.length + " bytes");
+		//System.out.println("Original Signature size: " + digitalSignatureBytes.length + " bytes");
         String digitalSignatureCipher_b64 = Base64.getEncoder().encodeToString(digitalSignatureBytes);
 
         document.addProperty("digital-signature", digitalSignatureCipher_b64);

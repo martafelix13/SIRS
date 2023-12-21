@@ -568,7 +568,7 @@ public class Client {
                 while ((responseLine = br.readLine()) != null) {
                     response.append(responseLine.trim());
                 }
-                System.out.println(response.toString());
+                //System.out.println(response.toString());
 
                 JsonObject responseJson =  JsonParser.parseString(response.toString()).getAsJsonObject();
 
@@ -581,7 +581,7 @@ public class Client {
                 
                 
                 String challenge = content.get("challenge").getAsString();
-                System.out.println("Challenge:" + challenge);
+                //System.out.println("Challenge:" + challenge);
 
                 PrivateKey privKey = null;
                 
@@ -595,7 +595,7 @@ public class Client {
                 // Decrypting the challenge
                 byte[] dencryptChallenge = Base64.getDecoder().decode(challenge);
                 byte[] challengeResponse = decryptRSAWithPrivateKey(dencryptChallenge, privKey);
-                System.out.println("Decrypted Challenge: " + new String(challengeResponse));
+                //System.out.println("Decrypted Challenge: " + new String(challengeResponse));
 
                 // Send the challenge response to the server
                 sendChallengeResponse(username, new String(challengeResponse), user);
@@ -708,7 +708,7 @@ public class Client {
                 //check if response is true
                 checkresponse(contentString);
 
-                System.out.println("Server Response: " + response.toString());
+                //System.out.println("Server Response: " + response.toString());
             }
             
             //connection.disconnect();
