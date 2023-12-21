@@ -445,11 +445,11 @@ public class ApiMeditrack {
     }
 
     private static String deletePersonalInformation(String patient) {
-        return "DELETE FROM consultations WHERE patient_name = " + patient + "; \n" +
-                "DELETE FROM allergies WHERE patient_name = ?;\n" + 
+        return  "DELETE FROM allergies WHERE patient_name = '" + patient + "';\n" + 
                 "DELETE FROM autorizations WHERE consultation_id IN (" +
-                "SELECT consultation_id FROM consultations WHERE patient_name = " + patient + "); \n" +
-                    "DELETE FROM patients WHERE name = " + patient;
+                    "SELECT consultation_id FROM consultations WHERE patient_name = '" + patient + "'); \n" +
+                "DELETE FROM consultations WHERE patient_name = '" + patient + "';\n" +
+                "DELETE FROM patients WHERE name = '" + patient + "';";
     }
 
     private static String getPatientsConsultations(String doctor, String patient) {
