@@ -22,8 +22,4 @@ SELECT
 FROM patients p
 LEFT JOIN allergies a ON p.name = a.patient_name
 LEFT JOIN consultations c ON p.name = c.patient_name
-WHERE c.consultation_id IN (
-    SELECT consultation_id
-    FROM autorizations
-    WHERE doctor_name = ?
-);
+

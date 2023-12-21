@@ -136,6 +136,11 @@ public class Client {
                                 String newSpeciality = scanner.next();
                                 sendDoctorChangeSpecialityRequest(doctorName2, newSpeciality);
                                 break;
+
+                            case 4:
+                                System.out.println("Activating SOS Mode");
+                                sendDoctorSOSRequest(username);
+                                break;
                             default:
                                 System.out.println("Invalid choice. Please try again.");
                         }
@@ -181,7 +186,8 @@ public class Client {
         System.out.println("1. View Patient History");
         System.out.println("2. Create Consultation");
         System.out.println("3. Change Speciality");
-        System.out.println("4. Exit");
+        System.out.println("4. Activate SOS Mode");
+        System.out.println("5. Exit");
         System.out.println("=================");
        
     }
@@ -476,6 +482,34 @@ public class Client {
             e.printStackTrace();
         }
     }
+
+
+    private static void sendDoctorSOSRequest(String doctorName) {
+        JsonObject jsonPayload = new JsonObject();
+        jsonPayload.addProperty("user", "doctor");
+        jsonPayload.addProperty("command", "sosMode");
+
+        JsonObject payload = new JsonObject();
+        payload.addProperty("doctorName", doctorName);
+
+        jsonPayload.addProperty("payload", payload.toString());
+
+        try {
+            
+            String jsonRequest = protectJsonClient(jsonPayload,"doctor");
+            // Send the JSON request to the server
+            try {
+                sendJsonRequest(jsonRequest,"doctor");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            
+        } catch (Exception e) {
+            
+            e.printStackTrace();
+        }
+    }
+
 
 
     private static void sendChallengeResponse(String username, String challengeResponse, String user) {

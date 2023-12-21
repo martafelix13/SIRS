@@ -1,39 +1,19 @@
 package pt.tecnico.meditrack;
-import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.ObjectOutputStream;
-import java.io.OutputStream;
-import java.net.InetSocketAddress;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.Map;
-
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-
-import com.sun.net.httpserver.HttpsServer;
-
-import javax.crypto.BadPaddingException;
-import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
-import javax.crypto.NoSuchPaddingException;
-import javax.net.SocketFactory;
-import javax.net.ssl.*;
-
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.InvalidKeyException;
 import java.security.Key;
 import java.security.KeyFactory;
@@ -49,8 +29,28 @@ import java.security.cert.CertificateException;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
+import java.time.LocalDateTime;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.net.SocketFactory;
+import javax.net.ssl.KeyManagerFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManagerFactory;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.sun.net.httpserver.HttpsConfigurator;
+import com.sun.net.httpserver.HttpsServer;
 
 
 
@@ -63,7 +63,7 @@ public class ApiMeditrack {
 
     private final static String PATIENT = "patient";
     private final static String DOCTOR = "doctor";
-    private final static String SOS = "sos";
+    private static int SOS = 0;
 
     final static String filename_db="db.json";
     final static String filename_client="response.json";
@@ -72,6 +72,10 @@ public class ApiMeditrack {
 
     private static Map<String, String> clientChallenges = new HashMap<>();
     private static Map<String, PublicKey> clientPublicKeys = new HashMap<>();
+
+    private static LocalDateTime functionalityStartTime;
+
+
 
     public static void main(String[] args) throws NoSuchAlgorithmException {
         try {
@@ -262,7 +266,7 @@ public class ApiMeditrack {
                     payload = JsonParser.parseString(content.get("payload").getAsString()).getAsJsonObject();
                     String patient = payload.get("patientName").getAsString();
                     String doctor = payload.get("doctorName").getAsString();
-                    query = getPatientsConsultations(doctor, patient);
+                    query = getPatientsConsultations(doctor, patient, validateSOS());                
                     System.out.println("query: " + query);
                     response =  sendRequestToDatabase(query);
                     break;
@@ -286,32 +290,28 @@ public class ApiMeditrack {
                     query = changeMedicalSpeciality(doctor, medicalSpeciality);
                     response =  sendRequestToDatabase(query);
                     break;
+                
+                case "sosMode": 
+                    payload = JsonParser.parseString(content.get("payload").getAsString()).getAsJsonObject();
+                    String sosMode = payload.get("doctorName").getAsString();
+                    functionalityStartTime = LocalDateTime.now();
+                    response = new JsonObject().toString();
+                    SOS = 1;
+                    break;
+
             }
         }
         return response;
     }
 
-    /*private static void protectResponse(String response, String username) {
-        try {
-            System.out.println("Response: " + response);
-            String pathToPrivateString = "./keys/api.privkey";
-
-            JsonObject clientResponse = new JsonObject();
-
-
-        
-            //String pathToPrivateString = "./keys/api.privkey";
-            JsonObject jsonResponse = JsonParser.parseString(response).getAsJsonObject();
-            //saveJsonToFile(jsonResponse, "db.json");
-
-            PublicKey pubKey = clientPublicKeys.get(username);
-            PrivateKey privKey = readPrivateKey(pathToPrivateString);
-
-            SecureDocument.protectJson(jsonResponse, clientResponse, pubKey , privKey, "keys/secret.key");
-        } catch (Exception e) {
-            e.printStackTrace();
+    private static boolean validateSOS() {
+        LocalDateTime currentTime = LocalDateTime.now();
+        if (SOS == 1 && currentTime.isAfter(functionalityStartTime.plusMinutes(1))) {
+            SOS = 0;
+            return true;
         }
-    }*/
+        return false;
+    }
     
     private static void configSecureSockets(){
         System.setProperty("javax.net.ssl.keyStore", "certificates/api.p12");
@@ -452,11 +452,16 @@ public class ApiMeditrack {
                 "DELETE FROM patients WHERE name = '" + patient + "';";
     }
 
-    private static String getPatientsConsultations(String doctor, String patient) {
+    private static String getPatientsConsultations(String doctor, String patient, boolean sos) {
         String adaptQuery = "";
         try {
-            String query = readQueryFromFile("queries/getConsultationsRecords.sql");
-            adaptQuery = query.replace("?", "'" + doctor + "'");
+            String query = new String();
+            query = readQueryFromFile("queries/getPatientsConsultationsSOS.sql");
+            if (sos) {
+                adaptQuery = query + "WHERE p.name = '" + patient + "';";
+            } else {
+                adaptQuery = query + "WHERE c.consultation_id IN (SELECT consultation_id FROM autorizations WHERE doctor_name = '" + doctor + "') AND p.name = '" + patient + "';";
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
