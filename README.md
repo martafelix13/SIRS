@@ -56,6 +56,12 @@ Inside each machine, use Git to obtain a copy of all the scripts and code.
 $ git clone https://github.com/tecnico-sec/a34-francisco-marta-luis.git
 ```
 
+Before running remember to install the SecureDocument library
+
+```sh
+$ mvn clean install
+```
+
 Next we have custom instructions for each machine.
 
 #### Machine 1 - Database
@@ -175,6 +181,7 @@ If you receive the following message ... then ...
 
 
 Now that all the networks and machines are up and running, let's go through that main features of the MediTrack Platform
+
 
 1- First exectute the java script on each machine (Database, Api and Client)
 ```sh
