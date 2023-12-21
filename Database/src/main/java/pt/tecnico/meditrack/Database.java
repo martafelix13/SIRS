@@ -29,6 +29,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
 
 
 public class Database {
@@ -151,8 +152,15 @@ public class Database {
             Statement statement = connection.createStatement();
             ResultSet resultSet = statement.executeQuery(query)) {
 
-            JsonObject jsonobj = organizeJsonResult(resultSet);
-            jsonResult = jsonobj.toString();
+            List<Map<String, Object>> resultList = convertResultSetToMapList(resultSet);
+
+            if (resultList.size() == 1) {
+                Map<String, Object> result = resultList.get(0);
+                jsonResult = convertMapToJson(result);
+                System.out.println(jsonResult);
+            } else {
+                //jsonResult = convertMapListToJson(resultList);
+            }
 
                 
             } catch (Exception e) {
@@ -165,7 +173,11 @@ public class Database {
         return jsonResult;
     }
 
-    
+    public static String convertMapToJson(Map<String, Object> map) {
+        Gson gson = new Gson();
+        String json = gson.toJson(map);
+        return json;
+    }
 
     public static int updateData(String query) throws IOException {
         String jdbcUrl = "jdbc:sqlite:src/main/java/pt/tecnico/meditrack/meditrack.db";
@@ -184,7 +196,27 @@ public class Database {
         }
     }
 
-    public static JsonObject organizeJsonResult(ResultSet resultSet) throws IOException, SQLException {
+    private static List<Map<String, Object>> convertResultSetToMapList(ResultSet resultSet) throws Exception {
+        List<Map<String, Object>> resultList = new ArrayList<>();
+        ResultSetMetaData metaData = resultSet.getMetaData();
+
+        while (resultSet.next()) {
+            Map<String, Object> row = new HashMap<>();
+
+            for (int i = 1; i <= metaData.getColumnCount(); i++) {
+                String columnName = metaData.getColumnName(i);
+                Object columnValue = resultSet.getObject(i);
+                row.put(columnName, columnValue);
+            }
+
+            resultList.add(row);
+        }
+
+        return resultList;
+    }
+
+
+   /*  public static JsonObject organizePatientJsonResult(ResultSet resultSet) throws IOException, SQLException {
         // Convert the result set to JSON
         JsonObject jsonObject = new JsonObject();
         JsonArray jsonArray = new JsonArray();
@@ -208,5 +240,33 @@ public class Database {
         jsonObject.add("consultations", jsonArray);
         return jsonObject;
     }
+
+    public static String organizeDoctorJsonResult(ResultSet resultSet) throws JsonSyntaxException, SQLException {
+        List<JsonObject> patientsJsonList = new ArrayList<>();
+        while (resultSet.next()) {
+            JsonObject patientJsonObject = new JsonObject();
+            patientJsonObject.addProperty("name", resultSet.getString("name"));
+            patientJsonObject.addProperty("sex", resultSet.getString("sex"));
+            patientJsonObject.addProperty("dateOfBirth", resultSet.getString("dateOfBirth"));
+            patientJsonObject.addProperty("bloodType", resultSet.getString("bloodType"));
+
+            // Convert knownAllergies to JsonArray
+            JsonArray knownAllergiesArray = new Gson().fromJson(resultSet.getString("knownAllergies"), JsonArray.class);
+            patientJsonObject.add("knownAllergies", knownAllergiesArray);
+
+            // Convert consultationRecords to JsonArray
+            JsonArray consultationRecordsArray = new Gson().fromJson(resultSet.getString("consultationRecords"), JsonArray.class);
+            patientJsonObject.add("consultationRecords", consultationRecordsArray);
+
+            patientsJsonList.add(patientJsonObject);
+        }
+
+        // Convert the list of patients to a JSON array
+        JsonArray patientsJsonArray = new JsonArray();
+        patientsJsonList.forEach(patientsJsonArray::add);
+
+        // Convert the JSON array to a string
+        return patientsJsonArray.toString();
    
+    } */
 }

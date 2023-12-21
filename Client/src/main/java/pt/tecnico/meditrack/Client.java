@@ -811,6 +811,8 @@ public class Client {
         for (char character : jsonString.toCharArray()) {
             
             switch (character) {
+                case '\\':
+                    continue;
                 case '{':
                 case '[':
                     prettyJson.append(character).append("\n").append(indentation(++indentation));
@@ -830,7 +832,7 @@ public class Client {
                     prettyJson.append(character);
             }
         }
-
+        
         return prettyJson.toString();
     }
 
