@@ -125,14 +125,14 @@ $ sudo ./set_db.sh meditrack.sql
 $ sudo ./set_firewall.sh
 ```
 
-Access the 'Database' folder
-```sh
-$ cd Database
-```
+Start the Database (root)
 
-Start the Database
 ```sh
 $ mvn clean install
+```
+
+```sh
+$ cd Database
 ```
 
 ```sh
@@ -172,14 +172,13 @@ $ sudo ./set_api.sh
 $ sudo ./set_firewall.sh
 ```
 
-Access the 'ApiMeditrack' folder
-```sh
-$ cd ApiMeditrack
-```
-
-Start the Api
+Start the Api (root)
 ```sh
 $ mvn clean install
+```
+
+```sh
+$ cd ApiMeditrack
 ```
 
 ```sh
@@ -187,6 +186,7 @@ $  mvn compile exec: java
 ```
 
 Note: In the API VM, activating firewall rules restrict communication with the DB. Therefore, it is recommended not to execute the "setup_firewall.sh" file for the API.
+
 
 #### Machine 3 - DMZ
 
@@ -220,6 +220,7 @@ $ sudo ./set_dmz.sh
 $ sudo ./set_firewall.sh
 ```
 
+
 #### Machine 4 - Client [Patient and Doctor]
 The client machine initiates requests to the server and processes encrypted responses. Its software encompasses a client-side application responsible for sending requests, decrypting received data, and providing users with an interactive experience for request processing and authentication. This introduces an abstraction and a security layer to enhance the project.
 
@@ -245,19 +246,20 @@ Execute the setup file
 $ sudo ./set_client.sh
 ```
 
-Access the 'Client' folder
-```sh
-$ cd Client
-```
+Start the Client (root)
 
-Start the Client
 ```sh
 $ mvn clean install
 ```
 
 ```sh
+$ cd Client
+```
+
+```sh
 $  mvn compile exec: java
 ```
+
 
 This is list of usernames in the database for testing functionalities. 
 Note: The input is case-sensitive
