@@ -26,7 +26,7 @@ import com.google.gson.JsonParser;
 
 import netscape.javascript.JSException;
 public class Client {
-    private static final String API_URL = "https://localhost:433/api";
+    private static final String API_URL = "https://localhost:443/api";
 
 
     private static boolean authenticated = false;

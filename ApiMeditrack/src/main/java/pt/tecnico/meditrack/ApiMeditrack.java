@@ -57,7 +57,7 @@ import com.sun.net.httpserver.HttpsServer;
 public class ApiMeditrack {
 
     private final static int PORT = 3306;
-    private final static int PORT_HTTPS = 433;
+    private final static int PORT_HTTPS = 443;
 
     private final static String ADDRESS = "localhost";
 
