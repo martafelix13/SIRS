@@ -27,7 +27,8 @@ The following diagram shows the networks and machines:
 
 
 
-*(include diagram from discord)*
+![Uploading image.png…]()
+
 
 ### Prerequisites
 
