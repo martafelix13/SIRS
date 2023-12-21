@@ -25,9 +25,8 @@ To see the project in action, it is necessary to setup a virtual environment, wi
 
 The following diagram shows the networks and machines:
 
+![image](https://github.com/tecnico-sec/a34-francisco-marta-luis/assets/15965849/ff78de91-e87e-4601-9d35-8bcbde06a22a)
 
-
-![Uploading image.png…]()
 
 
 ### Prerequisites
