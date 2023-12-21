@@ -27,20 +27,30 @@ This document presents installation and demonstration instructions.
 
 ## Installation
 
-To see the project in action, it is necessary to setup a virtual environment, with N networks and M machines.  
+To see the project in action, it is necessary to setup a virtual environment, with 2 networks and 4 machines.  
 
 The following diagram shows the networks and machines:
 
-*(include a text-based or an image-based diagram)*
+
+
+*(include diagram from discord)*
 
 ### Prerequisites
 
 All the virtual machines are based on: Linux 64-bit, Kali 2023.3  
 
-[Download](https://...link_to_download_installation_media) and [install](https://...link_to_installation_instructions) a virtual machine of Kali Linux 2023.3.  
-Clone the base machine to create the other machines.
+1. Download VirtualBox at [Virtual Box](https://www.virtualbox.org) official website;
+2. Install VirtualBox following [instructions from the manual](https://www.virtualbox.org/manual/ch02.html);
+3. Create a new Virtual Machine following the [Kali inside VirtualBox tutorial](https://www.kali.org/docs/virtualization/install-virtualbox-guest-vm/);
+4. Install Kali Linux inside the VM, following the [Kali Setup tutorial](KaliSetup.md).
 
-*(above, replace witch actual links)*
+Clone the base machine to create the other machines.
+1. Make sure that the machine about to be cloned is powered off
+2. Select the machine with the right button of your mouse and click Clone
+3. Select the name you want to give to the new machine (we suggest using the names gives above to simplify the experience)
+4. MAC Adress Policy: Generate new MAC addresses for all network adapters
+5. Select Linked Clone
+
 
 ### Machine configurations
 
@@ -54,14 +64,11 @@ $ git clone https://github.com/tecnico-sec/a34-francisco-marta-luis.git
 
 Next we have custom instructions for each machine.
 
-#### Machine 1
+#### Machine 1 - Database
 
-This machine runs ...
+The Database Machine serves as the host for the SQLite database and operates a Java program with a socket that listens for incoming requests from the API Machine. The Java program processes these requests, interacts with the SQLite database, and sends formatted responses back through the same socket channel. 
 
-*(describe what kind of software runs on this machine, e.g. a database server (PostgreSQL 16.1))*
-
-To verify:
-
+To setup the machine:
 ```sh
 $ setup command
 ```
@@ -69,7 +76,6 @@ $ setup command
 *(replace with actual commands)*
 
 To test:
-
 ```sh
 $ test command
 ```
@@ -78,19 +84,87 @@ $ test command
 
 The expected results are ...
 
-*(explain what is supposed to happen if all goes well)*
+If you receive the following message ... then ...
+
+*(explain how to fix some known problem)*
+
+#### Machine 2 - API Meditrack
+The server machine is central to processing client requests, converting them into database queries, ensuring secure communication via client-side secure sockets, and managing HTTPS interactions with the Client, through the DMZ. It handles decryption of incoming client requests, encrypts responses, and employs RSA-based authentication. The software stack includes secure sockets, HTTPS communication, request decryption, response encryption, and robust authentication.
+
+To setup the machine:
+```sh
+$ setup command
+```
+
+*(replace with actual commands)*
+
+To test:
+```sh
+$ test command
+```
+
+*(replace with actual commands)*
+
+The expected results are ...
 
 If you receive the following message ... then ...
 
 *(explain how to fix some known problem)*
 
-#### Machine ...
 
-*(similar content structure as Machine 1)*
+#### Machine 3 - DMZ
+(LUIS)
+The server machine is central to processing client requests, converting them into database queries, ensuring secure communication via client-side secure sockets, and managing HTTPS interactions with the Client, through the DMZ. It handles decryption of incoming client requests, encrypts responses, and employs RSA-based authentication. The software stack includes secure sockets, HTTPS communication, request decryption, response encryption, and robust authentication.
+
+To setup the machine:
+```sh
+$ setup command
+```
+
+*(replace with actual commands)*
+
+To test:
+```sh
+$ test command
+```
+
+*(replace with actual commands)*
+
+The expected results are ...
+
+If you receive the following message ... then ...
+
+*(explain how to fix some known problem)*
+
+
+#### Machine 4 - Client [Patient and Doctor]
+The client machine initiates requests to the server and processes encrypted responses. Its software encompasses a client-side application responsible for sending requests, decrypting received data, and providing users with an interactive experience for request processing and authentication. This introduces an abstraction and a security layer to enhance the project.
+
+To setup the machine:
+```sh
+$ setup command
+```
+
+*(replace with actual commands)*
+
+To test:
+```sh
+$ test command
+```
+
+*(replace with actual commands)*
+
+The expected results are ...
+
+If you receive the following message ... then ...
+
+*(explain how to fix some known problem)*
 
 ## Demonstration
+(MATA PLS)
 
 Now that all the networks and machines are up and running, ...
+
 
 *(give a tour of the best features of the application; add screenshots when relevant)*
 
@@ -110,7 +184,10 @@ This concludes the demonstration.
 
 - [Java 11.0.16.1](https://openjdk.java.net/)
 - [Maven 3.9.5](https://maven.apache.org/)
-- ...
+- [SQLite 3.x](https://www.sqlite.org/)
+- [Log4j 1.2.17](https://logging.apache.org/log4j/1.2/)
+- [Gson 2.10.1](https://github.com/google/gson)
+- [SecureDocument](https://github.com/tecnico-sec/a34-francisco-marta-luis/tree/29b64fcd269181bc1f49fdd212f720c93c48c16d/SecureDocument)
 
 ### Versioning
 
@@ -119,8 +196,6 @@ We use [SemVer](http://semver.org/) for versioning.
 ### License
 
 This project is licensed under the MIT License - see the [LICENSE.txt](LICENSE.txt) for details.
-
-*(switch to another license, or no license, as you see fit)*
 
 ----
 END OF README

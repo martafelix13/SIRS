@@ -13,40 +13,44 @@ In response to the growing need for enhanced security in managing patient data w
 
 Our custom cryptographic library, implemented in Java using the Java Cryptography Architecture (JCA), is meticulously designed to uphold the authenticity and confidentiality of patient data within the MediTrack EHR system. The following is an illustrative example of our data format, showcasing the designed protections.
 
-{
-  "patient": {
-    "name": "Bob",
-    "sex": "Male",
-    "dateOfBirth": "2004-05-15",
-    "bloodType": "A+",
-    "knownAllergies": ["Penicillin"],
-    "consultationRecords": [
-      {
-        "date": "2022-05-15",
-        "medicalSpeciality": "Orthopedic",
-        "doctorName": "Dr. Smith",
-        "practice": "OrthoCare Clinic",
-        "treatmentSummary": "Fractured left tibia; cast applied."
-        "access": ["Dr. Smith"]
-      },
-      {
-        "date": "2023-04-20",
-        "medicalSpeciality": "Gastroenterology",
-        "doctorName": "Dr. Johnson",
-        "practice": "Digestive Health Center",
-        "treatmentSummary": "Diagnosed with gastritis; prescribed antacids."
-        "access":["Dr. Smith"]
-      },
-      {
-        "date": "2023-09-05",
-        "medicalSpeciality": "Dermatology",
-        "doctorName": "Dr. Martins",
-        "practice": "SkinCare Clinic",
-        "treatmentSummary": "Treated for Molluscum Contagiosum; prescribed topical corticosteroids."
-        "access":["Dr. Smith"]
-      }
-    ]
-  },
+{ "value" : 
+  [{"patient": 
+    {
+      "name": "Bob",
+      "sex": "Male",
+      "dateOfBirth": "2004-05-15",
+      "bloodType": "A+",
+      "knownAllergies": ["Penicillin"],
+      "consultationRecords": [
+        {
+          "date": "2022-05-15",
+          "medicalSpeciality": "Orthopedic",
+          "doctorName": "Dr. Smith",
+          "practice": "OrthoCare Clinic",
+          "treatmentSummary": "Fractured left tibia; cast applied."
+          "access": ["Dr. Smith"]
+        },
+        {
+          "date": "2023-04-20",
+          "medicalSpeciality": "Gastroenterology",
+          "doctorName": "Dr. Johnson",
+          "practice": "Digestive Health Center",
+          "treatmentSummary": "Diagnosed with gastritis; prescribed antacids."
+          "access":["Dr. Smith"]
+        },
+        {
+          "date": "2023-09-05",
+          "medicalSpeciality": "Dermatology",
+          "doctorName": "Dr. Martins",
+          "practice": "SkinCare Clinic",
+          "treatmentSummary": "Treated for Molluscum Contagiosum; prescribed topical corticosteroids."
+          "access":["Dr. Smith"]
+        }
+      ]
+    }},
+  {
+    secret_key_here
+  }],
   "authenticity": "digital_signature_here",
   "freshness": "encrypted_data_here"
 }
