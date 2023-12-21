@@ -88,14 +88,14 @@ public class ApiMeditrack {
                 try (InputStream request = exchange.getRequestBody()) {
                     String requestBody = new String(request.readAllBytes(), StandardCharsets.UTF_8);
                     
-                    System.out.println("Received JSON request: " + requestBody);
+                    //System.out.println("Received JSON request: " + requestBody);
                     JsonObject jsonRequest = JsonParser.parseString(requestBody).getAsJsonObject();
                     String response;
                     try {
                         response = processJsonRequest(jsonRequest);
-                        System.out.println("Sending JSON response: " + response);
+                        //System.out.println("Sending JSON response: " + response);
                         String encryptResponse = protectResponse(response);
-                        System.out.println("Encrypt Json: " + encryptResponse);
+                        //System.out.println("Encrypt Json: " + encryptResponse);
                         //JsonObject jsonResponse = JsonParser.parseString(response).getAsJsonObject();
                         
                         //saveJsonToFile(jsonResponse, filename_db);
@@ -189,20 +189,20 @@ public class ApiMeditrack {
 
         file = SecureDocument.unprotectJson(file, privKey, pubKey);
 
-        System.out.println("Received JSON request unprotected: " + file.toString());
+        //System.out.println("Received JSON request unprotected: " + file.toString());
         
         //Get file content
 
         JsonObject content = JsonParser.parseString(file.get("content").getAsString()).getAsJsonObject();
 
         String user = content.get("user").getAsString();
-        System.out.println("User from file: " + user);
+        //System.out.println("User from file: " + user);
         String response = "Internal server error";
         String query = "";
         if (user.equals(PATIENT)) {
 
             String command = content.get("command").getAsString();
-            System.out.println("command from file: " + command);
+            //System.out.println("command from file: " + command);
 
             switch (command) {
                 case "authPatient":
@@ -211,7 +211,7 @@ public class ApiMeditrack {
                     String username = payload.get("username").getAsString();
                     String publicKeyString = payload.get("publicKey").getAsString();
                     response = handleAuthString(username, publicKeyString);
-                    System.out.println(response);
+                    //System.out.println(response);
                     break;
                 
                 case "validateAuth":
@@ -219,13 +219,13 @@ public class ApiMeditrack {
                     String challengeResponse = payload.get("challengeResponse").getAsString();
                     username = payload.get("username").getAsString();
                     response = validateAuth(username, challengeResponse);
-                    System.out.println(response);
+                    //System.out.println(response);
                     break;
                 
                 case "getRegisters":
                     payload = JsonParser.parseString(content.get("payload").getAsString()).getAsJsonObject();
                     String patient = payload.get("patientName").getAsString();
-                    System.out.println("patientName from file: " + patient);
+                    //System.out.println("patientName from file: " + patient);
                     query = getPatientRegisters(patient);
                     response = sendRequestToDatabase(query);
                     break;
@@ -250,7 +250,7 @@ public class ApiMeditrack {
         if (user.equals(DOCTOR)) {
 
             String command = content.get("command").getAsString();
-            System.out.println("command from file: " + command);
+            //System.out.println("command from file: " + command);
 
             switch (command) {
 
@@ -259,7 +259,7 @@ public class ApiMeditrack {
                     String username = payload.get("username").getAsString();
                     String publicKeyString = payload.get("publicKey").getAsString();
                     response = handleAuthString(username, publicKeyString);
-                    System.out.println(response);
+                    //System.out.println(response);
                     break;
 
                 case "getPatientsConsultations":
@@ -267,7 +267,7 @@ public class ApiMeditrack {
                     String patient = payload.get("patientName").getAsString();
                     String doctor = payload.get("doctorName").getAsString();
                     query = getPatientsConsultations(doctor, patient);                
-                    //System.out.println("query: " + query);
+                    ////System.out.println("query: " + query);
                     response =  sendRequestToDatabase(query);
                     break;
             
@@ -288,7 +288,7 @@ public class ApiMeditrack {
                     doctor = payload.get("doctorName").getAsString();
                     medicalSpeciality = payload.get("speciality").getAsString();
                     query = changeMedicalSpeciality(doctor, medicalSpeciality);
-                    System.out.println("query: " + query);
+                    //System.out.println("query: " + query);
                     response =  sendRequestToDatabase(query);
                     break;
                 
@@ -308,7 +308,7 @@ public class ApiMeditrack {
     private static boolean validateSOS() {
 
         // print sos mode
-        System.out.println("============================ SOS: " + SOS);
+        //System.out.println("============================ SOS: " + SOS);
 
 
         LocalDateTime currentTime = LocalDateTime.now();
@@ -346,7 +346,7 @@ public class ApiMeditrack {
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
                 // Read JSON data from the client
                 String data = reader.readLine();
-                System.out.println("Received JSON: " + data);
+                //System.out.println("Received JSON: " + data);
         
                 return data;
 
@@ -363,7 +363,7 @@ public class ApiMeditrack {
     private static String handleAuthString(String username, String publicKeyString) throws NoSuchAlgorithmException, InvalidKeySpecException, NoSuchPaddingException, InvalidKeyException, IllegalBlockSizeException, BadPaddingException {
         byte[] challengeBytes = generateRandomString(CHALLENGE_SIZE);
         String challenge = Base64.getEncoder().encodeToString(challengeBytes);
-        System.out.println("Original Challenge: " + challenge);
+        //System.out.println("Original Challenge: " + challenge);
         clientChallenges.put(username, challenge);
 
         //string to byte[]
@@ -385,7 +385,7 @@ public class ApiMeditrack {
             challengeBytes = challenge.getBytes(); // Replace with your actual challenge
             byte[] encryptChallenge = encryptContentRSAWithPublicKey(challengeBytes, pubKey);
             String encryptedChallenge = Base64.getEncoder().encodeToString(encryptChallenge);
-            System.out.println("Encrypted Challenge: " + encryptedChallenge);
+            //System.out.println("Encrypted Challenge: " + encryptedChallenge);
 
             
 
@@ -407,9 +407,9 @@ public class ApiMeditrack {
         
         String challenge = clientChallenges.get(username);
 
-        System.out.println("Challenge: " + challenge);
-        System.out.println("Challenge Response: " + challengeResponse);
-        System.out.println("challenge.equals(challengeResponse) " + challenge.equals(challengeResponse));
+        //System.out.println("Challenge: " + challenge);
+        //System.out.println("Challenge Response: " + challengeResponse);
+        //System.out.println("challenge.equals(challengeResponse) " + challenge.equals(challengeResponse));
         if (challenge != null && challenge.equals(challengeResponse)) {
             responseObject.addProperty("validation", true);
         } else {
@@ -417,8 +417,8 @@ public class ApiMeditrack {
             clientPublicKeys.remove(username);
         }
 
-        System.out.println("Clients Keys " + clientPublicKeys.toString());
-        System.out.println("Clients Challenges " + clientChallenges.toString());
+        //System.out.println("Clients Keys " + clientPublicKeys.toString());
+        //System.out.println("Clients Challenges " + clientChallenges.toString());
         return responseObject.toString();
     }
 
@@ -473,7 +473,7 @@ public class ApiMeditrack {
             e.printStackTrace();
         }
         // print query
-        System.out.println("query: " + adaptQuery);
+        //System.out.println("query: " + adaptQuery);
         return adaptQuery;
     }
 

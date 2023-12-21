@@ -82,10 +82,10 @@ public class Database {
 
             JsonObject clientJson = JsonParser.parseString(message).getAsJsonObject();
             String query = clientJson.get("value").getAsString();
-            System.out.println("query: " + query);
+            //System.out.println("query: " + query);
             String response = handleQuery(query);
 
-            System.out.println("response: " + response);
+            //System.out.println("response: " + response);
             
             try (PrintWriter writer = new PrintWriter(socket.getOutputStream(), true)) {
                 // Send JSON data to the server
@@ -128,10 +128,10 @@ public class Database {
             if (getMethod(query).equals("UPDATE") || getMethod(query).equals("DELETE") || getMethod(query).equals("INSERT")) {
                 int response = updateData(query);
                 if (response != -1) {
-                    System.out.println("Operation was sucessfull.");
+                    //System.out.println("Operation was sucessfull.");
                     data.addProperty("state", "successful");
                 } else {
-                    System.out.println("Operation failed.");
+                    //System.out.println("Operation failed.");
                     data.addProperty("state", "failed");
                 }
                 return data.toString();
@@ -157,7 +157,7 @@ public class Database {
             if (resultList.size() == 1) {
                 Map<String, Object> result = resultList.get(0);
                 jsonResult = convertMapToJson(result);
-                System.out.println(jsonResult);
+                //System.out.println(jsonResult);
             } else {
                 //jsonResult = convertMapListToJson(resultList);
             }
@@ -185,9 +185,9 @@ public class Database {
         try (Connection connection = DriverManager.getConnection(jdbcUrl);
              Statement statement = connection.createStatement()) {
     
-            System.out.println("Query received: " + query);
+            //System.out.println("Query received: " + query);
             int rowsAffected = statement.executeUpdate(query);
-            System.out.println("Rows affected: " + rowsAffected);
+            //System.out.println("Rows affected: " + rowsAffected);
             return rowsAffected;
     
         } catch (Exception e) {
@@ -215,58 +215,4 @@ public class Database {
         return resultList;
     }
 
-
-   /*  public static JsonObject organizePatientJsonResult(ResultSet resultSet) throws IOException, SQLException {
-        // Convert the result set to JSON
-        JsonObject jsonObject = new JsonObject();
-        JsonArray jsonArray = new JsonArray();
-        while (resultSet.next()) {
-            jsonObject.addProperty("name", resultSet.getString("name"));
-            jsonObject.addProperty("sex", resultSet.getString("sex"));
-            jsonObject.addProperty("dateOfBirth", resultSet.getString("dateOfBirth"));
-            jsonObject.addProperty("bloodType", resultSet.getString("bloodType"));
-            jsonObject.add("knownAllergies", new Gson().fromJson(resultSet.getString("knownAllergies"), JsonArray.class));
-            JsonObject consultations = new JsonObject();
-            consultations.addProperty("consultationDate", resultSet.getString("consultationDate"));
-            consultations.addProperty("medicalSpeciality", resultSet.getString("medicalSpeciality"));
-            consultations.addProperty("doctorName", resultSet.getString("doctorName"));
-            consultations.addProperty("practice", resultSet.getString("practice"));
-            consultations.addProperty("treatmentSummary", resultSet.getString("treatmentSummary"));
-            jsonArray.add(consultations);
-        }
-
-        // Print or use the JSON as needed
-        System.out.println(new Gson().toJson(jsonArray));
-        jsonObject.add("consultations", jsonArray);
-        return jsonObject;
-    }
-
-    public static String organizeDoctorJsonResult(ResultSet resultSet) throws JsonSyntaxException, SQLException {
-        List<JsonObject> patientsJsonList = new ArrayList<>();
-        while (resultSet.next()) {
-            JsonObject patientJsonObject = new JsonObject();
-            patientJsonObject.addProperty("name", resultSet.getString("name"));
-            patientJsonObject.addProperty("sex", resultSet.getString("sex"));
-            patientJsonObject.addProperty("dateOfBirth", resultSet.getString("dateOfBirth"));
-            patientJsonObject.addProperty("bloodType", resultSet.getString("bloodType"));
-
-            // Convert knownAllergies to JsonArray
-            JsonArray knownAllergiesArray = new Gson().fromJson(resultSet.getString("knownAllergies"), JsonArray.class);
-            patientJsonObject.add("knownAllergies", knownAllergiesArray);
-
-            // Convert consultationRecords to JsonArray
-            JsonArray consultationRecordsArray = new Gson().fromJson(resultSet.getString("consultationRecords"), JsonArray.class);
-            patientJsonObject.add("consultationRecords", consultationRecordsArray);
-
-            patientsJsonList.add(patientJsonObject);
-        }
-
-        // Convert the list of patients to a JSON array
-        JsonArray patientsJsonArray = new JsonArray();
-        patientsJsonList.forEach(patientsJsonArray::add);
-
-        // Convert the JSON array to a string
-        return patientsJsonArray.toString();
-   
-    } */
 }
