@@ -8,11 +8,7 @@
 | 110859 | Luis Marques        | <https://github.com/oCaramelo>      | <luis.caramelo.marques@tecnico.ulisboa.pt> |
 | 99221  | Francisco Gil Mata  | <https://github.com/franciscogmata> | <francisco.gil.mata@tecnico.ulisboa.pt>    |  
 
-*(fill table above with team member information)*  
-
-![Marta Félix](img/MartaFélix.jpeg) ![Luis Marques](img/LuisMarques.jpeg) ![Francisco Gil Mata](img/FranciscoGilMata.jpeg)
-
-*(add face photos with 150px height; faces should have similar size and framing)*
+*![Marta Félix](img/MartaFelix.jpg) ![Luis Marques](img/LuisMarques.jpg) ![Francisco Gil Mata](img/FranciscoGilMata.jpg)
 
 ## Contents
 
@@ -22,8 +18,6 @@ The [REPORT](REPORT.md) document provides a detailed overview of the key technic
 It offers insights into the rationale behind these choices, the project's architecture, and the impact of these decisions on the overall functionality and performance of the system.
 
 This document presents installation and demonstration instructions.
-
-*(adapt all of the following to your project, changing to the specific Linux distributions, programming languages, libraries, etc)*
 
 ## Installation
 
