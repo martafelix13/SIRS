@@ -63,7 +63,9 @@ Clone the base machine to create the other machines.
 | __Client__: |
 | 1 | 192.168.2.11 | eth0 || sw-2 | - | 
 
-The ***DB*** machine has a ***default gateway*** only for bootstrap purposes
+The promiscuous mode of the internal networks should be changed to 'Allow VMs'.
+
+Note: The ***DB*** machine has a ***default gateway*** only for bootstrap purposes.
 
 ### Machine configurations
 
