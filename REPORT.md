@@ -72,7 +72,9 @@ The first communication refered was stablished through secure sockets.We created
 For this communications we created a script "generateCertificates.sh" to allow the creation of all the certificates, clients and thrustore needed. Although this won't be needed as all the certificates and keys are already in the project documents, ready to be used.
 
 2. HTTPS
-(MATA)
+For the communication between the Client and the Api we used an HTTPS secure connection through the "https://localhost:443/api" URL. To ensure that the communication was secure we also used the "generateCertificates.sh" to create the client's certificates.
+
+The comunication was allways started from the Client side and receved a response from the server
 
 
 
