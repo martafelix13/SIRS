@@ -55,11 +55,8 @@ Token (Freshness): This token acts as a safeguard against tampering and replay a
 
 #### 2.2.1. Network and Machine Setup
 
-
-
-(_Provide a brief description of the built infrastructure._)
-
-(_Justify the choice of technologies for each server._)
+In this project, we utilized four virtual machines, which we'll refer to as API, DB, DMZ, and Client. The API machine is connected to two internal networks, "sw-0" and "sw-1," linking to the DMZ and the API, respectively. The DB machine is connected to two internal networks, "sw-1" and "sw-3." "sw-1" connects to the API, and "sw-3" is linked to the DMZ but serves solely for bootstrap purposes. The Client machine has two networks: an internal one connecting to the DMZ to simulate access to a web server and a NAT for internet access.
+The DMZ encompasses four networks: three internal networks, "sw-0," "sw-2," and "sw-3," and a NAT that provides internet access to machines in the local network. We've designated the DMZ as the default gateway for these machines, allowing them to access the internet.
 
 #### 2.2.2. API Communication Security
 
