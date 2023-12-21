@@ -263,7 +263,7 @@ public class ApiMeditrack {
                     String patient = payload.get("patientName").getAsString();
                     String doctor = payload.get("doctorName").getAsString();
                     query = getPatientsConsultations(doctor, patient);
-                    System.out.println("query: " + query);
+                    
                     response =  sendRequestToDatabase(query);
                     break;
             
@@ -272,18 +272,19 @@ public class ApiMeditrack {
                     patient = payload.get("patientName").getAsString();
                     String date = payload.get("date").getAsString();
                     doctor = payload.get("doctorName").getAsString();
-                    String medicalSpeciality = payload.get("medicalSpeciality").getAsString();
-                    String practice = payload.get("pratice").getAsString();
+                    String medicalSpeciality = payload.get("speciality").getAsString();
+                    String practice = payload.get("practice").getAsString();
                     String treatmentSummary = payload.get("treatmentSummary").getAsString();
                     query = createConsultation(patient, date, medicalSpeciality, doctor, practice, treatmentSummary);
                     response =  sendRequestToDatabase(query);
                     break;
                 
-                case "changeMedicalSpeciality":
+                case "changeSpeciality":
                     payload = JsonParser.parseString(content.get("payload").getAsString()).getAsJsonObject();
                     doctor = payload.get("doctorName").getAsString();
-                    medicalSpeciality = payload.get("newMedicalSpeciality").getAsString();
+                    medicalSpeciality = payload.get("speciality").getAsString();
                     query = changeMedicalSpeciality(doctor, medicalSpeciality);
+                    System.out.println("query: " + query);
                     response =  sendRequestToDatabase(query);
                     break;
             }
@@ -465,11 +466,11 @@ public class ApiMeditrack {
 
     private static String createConsultation(String patientName, String date, String medicalSpeciality, String doctorName, String practice, String treatmentSummary) {
         return "INSERT INTO consultations (patient_name, date, medical_speciality, doctor_name, practice, treatment_summary)\n" + 
-                "\n VALUES ( " + patientName + ", " + date + "," + medicalSpeciality + "," + doctorName + ", " + practice + ", " + treatmentSummary + ")";
+                "\n VALUES ( '" + patientName + "', '" + date + "','" + medicalSpeciality + "','" + doctorName + "', '" + practice + "', '" + treatmentSummary + "')";
     }
 
     private static String changeMedicalSpeciality(String doctor, String medicalSpeciality) {
-        return "UPDATE doctors SET medical_speciality = " + medicalSpeciality + " WHERE name = " + doctor;
+        return "UPDATE doctors SET medical_speciality = '" + medicalSpeciality + "' WHERE name = '" + doctor + "'";
     }
 
     private static byte [] decryptRSAWithPrivateKey(byte[] content, PrivateKey privateKey) throws Exception{
