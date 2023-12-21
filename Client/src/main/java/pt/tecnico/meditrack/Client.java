@@ -19,6 +19,7 @@ import java.util.Scanner;
 import javax.crypto.Cipher;
 import javax.net.ssl.HttpsURLConnection;
 
+
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -305,7 +306,7 @@ public class Client {
             String jsonRequest = protectJsonClient(jsonPayload,"patient");
             // Send the JSON request to the server
             try {
-                sendJsonRequest(jsonRequest);
+                sendJsonRequest(jsonRequest,"patient");
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -337,7 +338,7 @@ public class Client {
             String jsonRequest = protectJsonClient(jsonPayload,"patient");
             // Send the JSON request to the server
             try {
-                sendJsonRequest(jsonRequest);
+                sendJsonRequest(jsonRequest, "patient");
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -367,7 +368,7 @@ public class Client {
             String jsonRequest = protectJsonClient(jsonPayload,"patient");
             // Send the JSON request to the server
             try {
-                sendJsonRequest(jsonRequest);
+                sendJsonRequest(jsonRequest,"patient");
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -399,7 +400,7 @@ public class Client {
             String jsonRequest = protectJsonClient(jsonPayload,"doctor");
             // Send the JSON request to the server
             try {
-                sendJsonRequest(jsonRequest);
+                sendJsonRequest(jsonRequest,"doctor");
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -434,7 +435,7 @@ public class Client {
             String jsonRequest = protectJsonClient(jsonPayload,"doctor");
             // Send the JSON request to the server
             try {
-                sendJsonRequest(jsonRequest);
+                sendJsonRequest(jsonRequest,"doctor");
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -465,7 +466,7 @@ public class Client {
             String jsonRequest = protectJsonClient(jsonPayload,"doctor");
             // Send the JSON request to the server
             try {
-                sendJsonRequest(jsonRequest);
+                sendJsonRequest(jsonRequest,"doctor");
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -477,7 +478,7 @@ public class Client {
     }
 
 
-    private static void sendChallengeResponse(String username, String challengeResponse) {
+    private static void sendChallengeResponse(String username, String challengeResponse, String user) {
         // Construct your JSON request payload
         JsonObject jsonPayload = new JsonObject();
         jsonPayload.addProperty("user", "patient");
@@ -492,13 +493,20 @@ public class Client {
         jsonPayload.addProperty("payload", payload.toString());
 
          try {
-            String jsonRequest =  protectJsonClient(jsonPayload,"patient");
-            // Send the JSON request to the server
-            try {
+
+            if(user.equals("patient")){
+                String jsonRequest =  protectJsonClient(jsonPayload,"patient");
                 sendJsonRequestValidation(jsonRequest, "patient");
-            } catch (IOException e) {
-                e.printStackTrace();
             }
+            else if(user.equals("doctor")){
+                String jsonRequest =  protectJsonClient(jsonPayload,"doctor");
+                sendJsonRequestValidation(jsonRequest, "doctor");
+            }
+            else{
+                System.out.println("Invalid user");
+            }
+            
+            
         }
         catch (Exception e) {
             e.printStackTrace();
@@ -562,7 +570,7 @@ public class Client {
                 System.out.println("Decrypted Challenge: " + new String(challengeResponse));
 
                 // Send the challenge response to the server
-                sendChallengeResponse(username, new String(challengeResponse));
+                sendChallengeResponse(username, new String(challengeResponse), user);
 
 
                 
@@ -580,7 +588,7 @@ public class Client {
 
     //////////////// JSON Requests ////////////////
 
-    private static void sendJsonRequest(String jsonRequest) throws IOException {
+    private static void sendJsonRequest(String jsonRequest, String user) throws IOException {
         URL url = new URL(API_URL);
         HttpsURLConnection connection = (HttpsURLConnection) url.openConnection();
 
@@ -598,17 +606,31 @@ public class Client {
                 os.write(input, 0, input.length);
             }
 
-            // Read the server's response
             try (BufferedReader br = new BufferedReader(new InputStreamReader(connection.getInputStream(), "utf-8"))) {
                 StringBuilder response = new StringBuilder();
                 String responseLine;
                 while ((responseLine = br.readLine()) != null) {
                     response.append(responseLine.trim());
                 }
+               
 
+                JsonObject responseJson =  JsonParser.parseString(response.toString()).getAsJsonObject();
+
+               //decrypt the response
+                JsonObject decryptJson = unprotectJsonClient(responseJson,user);
+
+                JsonObject content = JsonParser.parseString(decryptJson.get("content").getAsString()).getAsJsonObject();
+
+                // content to String
+                StringBuilder contentString = new StringBuilder();
+                contentString.append(content.toString());
+
+                //pretty print
+                String prettyJson = prettyPrintJson(contentString.toString());
+                
                 
 
-                System.out.println("Server Response: " + response.toString());
+                System.out.println("Server Response: " +'\n' +  prettyJson);
             }
             
             //connection.disconnect();
@@ -777,5 +799,46 @@ public class Client {
         return null;
         
 
+    }
+
+
+
+    public static String prettyPrintJson(String jsonString) {
+        StringBuilder prettyJson = new StringBuilder();
+        int indentation = 0;
+        boolean inQuotes = false;
+
+        for (char character : jsonString.toCharArray()) {
+            
+            switch (character) {
+                case '{':
+                case '[':
+                    prettyJson.append(character).append("\n").append(indentation(++indentation));
+                    break;
+                case '}':
+                case ']':
+                    prettyJson.append("\n").append(indentation(--indentation)).append(character);
+                    break;
+                case ',':
+                    prettyJson.append(character).append("\n").append(inQuotes ? "" : indentation(indentation));
+                    break;
+                case '"':
+                    inQuotes = !inQuotes;
+                    prettyJson.append(character);
+                    break;
+                default:
+                    prettyJson.append(character);
+            }
+        }
+
+        return prettyJson.toString();
+    }
+
+    private static String indentation(int level) {
+        StringBuilder indent = new StringBuilder();
+        for (int i = 0; i < level; i++) {
+            indent.append("  "); // Use two spaces for each level of indentation
+        }
+        return indent.toString();
     }
 }
