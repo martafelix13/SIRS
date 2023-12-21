@@ -69,87 +69,111 @@ Next we have custom instructions for each machine.
 The Database Machine serves as the host for the SQLite database and operates a Java program with a socket that listens for incoming requests from the API Machine. The Java program processes these requests, interacts with the SQLite database, and sends formatted responses back through the same socket channel. 
 
 To setup the machine:
+
+Grant permission for the .sh files to be executed
 ```sh
-$ setup command
+$ chmod +x set_db.sh
+```
+```sh
+$ chmod +x set_firewall.sh
 ```
 
-*(replace with actual commands)*
-
-To test:
+Execute the setup file
 ```sh
-$ test command
+$ sudo ./set_db.sh meditrack.sql
+```
+```sh
+$ sudo ./set_firewall.sh
 ```
 
-*(replace with actual commands)*
+Start the Database
+```sh
+$ mvn clean install
+```
 
-The expected results are ...
+```sh
+$  mvn compile exec: java
+```
 
-If you receive the following message ... then ...
-
-*(explain how to fix some known problem)*
 
 #### Machine 2 - API Meditrack
 The server machine is central to processing client requests, converting them into database queries, ensuring secure communication via client-side secure sockets, and managing HTTPS interactions with the Client, through the DMZ. It handles decryption of incoming client requests, encrypts responses, and employs RSA-based authentication. The software stack includes secure sockets, HTTPS communication, request decryption, response encryption, and robust authentication.
 
+
 To setup the machine:
+
+Grant permission for the .sh files to be executed
 ```sh
-$ setup command
+$ chmod +x set_api.sh
+```
+```sh
+$ chmod +x set_firewall.sh
 ```
 
-*(replace with actual commands)*
-
-To test:
+Execute the setup file
 ```sh
-$ test command
+$ sudo ./set_api.sh
+```
+```sh
+$ sudo ./set_firewall.sh
 ```
 
-*(replace with actual commands)*
+Start the Api
+```sh
+$ mvn clean install
+```
 
-The expected results are ...
+```sh
+$  mvn compile exec: java
+```
 
-If you receive the following message ... then ...
 
-*(explain how to fix some known problem)*
-
+Note: In the API VM, activating firewall rules restrict communication with the DB. Therefore, it is recommended not to execute the "setup_firewall.sh" file for the API.
 
 #### Machine 3 - DMZ
-(LUIS)
-The server machine is central to processing client requests, converting them into database queries, ensuring secure communication via client-side secure sockets, and managing HTTPS interactions with the Client, through the DMZ. It handles decryption of incoming client requests, encrypts responses, and employs RSA-based authentication. The software stack includes secure sockets, HTTPS communication, request decryption, response encryption, and robust authentication.
 
 To setup the machine:
+
+Grant permission for the .sh files to be executed
 ```sh
-$ setup command
+$ chmod +x set_dmz.sh
+```
+```sh
+$ chmod +x set_firewall.sh
 ```
 
-*(replace with actual commands)*
-
-To test:
+Execute the setup file
 ```sh
-$ test command
+$ sudo ./set_dmz.sh
+```
+```sh
+$ sudo ./set_firewall.sh
 ```
 
-*(replace with actual commands)*
-
-The expected results are ...
-
-If you receive the following message ... then ...
-
-*(explain how to fix some known problem)*
 
 
 #### Machine 4 - Client [Patient and Doctor]
 The client machine initiates requests to the server and processes encrypted responses. Its software encompasses a client-side application responsible for sending requests, decrypting received data, and providing users with an interactive experience for request processing and authentication. This introduces an abstraction and a security layer to enhance the project.
 
 To setup the machine:
+
+Grant permission for the .sh files to be executed
 ```sh
-$ setup command
+$ chmod +x set_client.sh
 ```
 
-*(replace with actual commands)*
-
-To test:
+Execute the setup file
 ```sh
-$ test command
+$ sudo ./set_client.sh
+```
+
+Start the Client
+```sh
+$ mvn clean install
+```
+
+```sh
+$  mvn compile exec: java
 ```
 
 This is list of usernames in the database for testing functionalities. 
