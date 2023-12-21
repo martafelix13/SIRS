@@ -109,16 +109,33 @@ This challenge resulted in changing the queries that are process by the database
 
 ## 3. Conclusion
 
-With this project we create a full system: from the database, the API/Server, the DMZ and the Client. The first 2 where in a internal network (LUISSSs)
-(_State the main achievements of your work._)
 
-(_Describe which requirements were satisfied, partially satisfied, or not satisfied; with a brief justification for each one._)
-
-
-(_Identify possible enhancements in the future._)
+### Main achievements
+The successful implementation of the Secure On-Demand Access (SOS) mode was probably our main achivement in this project. This feature empowers doctors with instantaneous access to the patient full medical information within a defined timeframe, fortified by a resilient reauthentication process.
 
 
-(_Offer a concluding statement, emphasizing the value of the project experience._)
+### Requirements
+Our project has effectively met primary requirements, particularly in establishing secure access control for both doctors and patients. However, nuanced areas of partial satisfaction have surfaced, notably in navigating access permissions within the regular mode. Patient authorization for specific consultations introduces a deliberate layer of privacy, with potential limitations in user experience. 
+
+The authentication process aligns with the core objective of ensuring that the user presenting the public key indeed possesses the corresponding private key.
+The authentication process was simplified but also satisfied the main goal of ensuring that the user presenting the public key indeed possesses the corresponding private key.
+
+For simplification purposes, we assumed a shared key pair for all patients and doctors. Despite its departure from real-world scenarios, this approach filters requests by username, maintaining a robust security stance. Unregistered patients receive only empty responses, adding an additional layer of data protection.
+
+
+### Possibly enhancements in the future
+ - Usability of Public Keys: While secret keys are dynamically generated in each communication, the handling of the public keys should be revised.
+
+- Database Selection: During the project we identified limitations in the encryption-at-rest feature of SQLite. Future considerations could explore transitioning to more robust databases like MySQL or PostgreSQL to enhance overall data security.
+
+- Functionality Expansion: Time constraints led to the prioritization of basic functions in the patient and doctors menu. Subsequent iterations could unlock the full potential of the project, introducing new functionalities.
+
+Note: In this project we assume that that private key cannot be stolen. The ownership of the private keys serves as ultimate validation to assure the users identity.
+
+### Conclusion
+This was a very complete project: starting with the creation of the crypto library in Java (SecureDocuments), where we gained insights into cryptography algorithms and their practical implementation and ending with the construction of a secure infrastructure from the ground up, where we learned the diverse communication methods between machines such as secure sockets, HTTPS requests, routing communications between different machines and implementing effective firewall configurations.
+
+Finally, the security challenge forced us to address a specific problem in the healthcare sector, demanding an original approach to problem-solving. This stage not only deepened our technical expertise but also emphasized the significance of adaptability in translating theoretical knowledge into practical solutions for real-world situations.
 
 ## 4. Bibliography
 

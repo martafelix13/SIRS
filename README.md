@@ -152,6 +152,23 @@ To test:
 $ test command
 ```
 
+This is list of usernames in the database for testing functionalities. 
+Note: The input is case-sensitive
+
+- Patients 
+    - Bob
+    - Alice
+    - Charlie
+
+- Doctors
+    - Dr.Smith
+    - Dr.Martins
+    - Dr.Johnson
+    - Dr.White
+    - Dr.Davis
+    - Dr.Brown
+    - Dr.Lee
+
 *(replace with actual commands)*
 
 The expected results are ...
