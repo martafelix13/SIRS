@@ -48,9 +48,17 @@ Clone the base machine to create the other machines.
 
 ### Machine configurations
 
-For each machine, there is an initialization script with the machine name, with prefix `init-` and suffix `.sh`, that installs all the necessary packages and makes all required configurations in the a clean machine.
+For each machine, there is an initialization script located within the folder named 'setup'. The script is named with the machine's name, prefixed with 'set_' and suffixed with '.sh'. This script installs all the necessary packages and performs all required configurations on a clean machine.
+
+To the VMs where it is necessary to define firewall rules, there is a file inside the 'setup' folder named 'set_firewall.sh'.
 
 Inside each machine, use Git to obtain a copy of all the scripts and code.
+
+As the 'DB' machine does not have internet access by default, it is necessary to copy the repository into this machine. To install its dependencies, the default gateway for this machine is set as the DMZ machine, which has a NAT adapter. Once the dependencies are installed, we remove the gateway with '$ sudo route del default'.
+
+Some machines need the ***DMZ*** machine to access the internet, so it should be the first one to be configured.
+
+Since adding firewall rules may result in some VMs losing internet access, it is suggested to perform the setup on all machines first and only then run the 'set_firewall.sh' file.
 
 ```sh
 $ git clone https://github.com/tecnico-sec/a34-francisco-marta-luis.git
@@ -70,6 +78,16 @@ The Database Machine serves as the host for the SQLite database and operates a J
 
 To setup the machine:
 
+Navigate to the root of the project
+```sh
+$ cd a34-francisco-marta-luis
+```
+
+Access the 'setup' folder
+```sh
+$ cd setup
+```
+
 Grant permission for the .sh files to be executed
 ```sh
 $ chmod +x set_db.sh
@@ -84,6 +102,11 @@ $ sudo ./set_db.sh meditrack.sql
 ```
 ```sh
 $ sudo ./set_firewall.sh
+```
+
+Access the 'Database' folder
+```sh
+$ cd Database
 ```
 
 Start the Database
@@ -102,6 +125,16 @@ The server machine is central to processing client requests, converting them int
 
 To setup the machine:
 
+Navigate to the root of the project
+```sh
+$ cd a34-francisco-marta-luis
+```
+
+Access the 'setup' folder
+```sh
+$ cd setup
+```
+
 Grant permission for the .sh files to be executed
 ```sh
 $ chmod +x set_api.sh
@@ -118,6 +151,11 @@ $ sudo ./set_api.sh
 $ sudo ./set_firewall.sh
 ```
 
+Access the 'ApiMeditrack' folder
+```sh
+$ cd ApiMeditrack
+```
+
 Start the Api
 ```sh
 $ mvn clean install
@@ -127,17 +165,28 @@ $ mvn clean install
 $  mvn compile exec: java
 ```
 
-
 Note: In the API VM, activating firewall rules restrict communication with the DB. Therefore, it is recommended not to execute the "setup_firewall.sh" file for the API.
 
 #### Machine 3 - DMZ
 
 To setup the machine:
 
+Navigate to the root of the project
+```sh
+$ cd a34-francisco-marta-luis
+```
+
+Access the 'setup' folder
+```sh
+$ cd setup
+```
+
 Grant permission for the .sh files to be executed
+
 ```sh
 $ chmod +x set_dmz.sh
 ```
+
 ```sh
 $ chmod +x set_firewall.sh
 ```
@@ -150,12 +199,36 @@ $ sudo ./set_dmz.sh
 $ sudo ./set_firewall.sh
 ```
 
+Access the 'Dmz' folder
+```sh
+$ cd Dmz
+```
+
+Start the Dmz server
+
+```sh
+$ mvn clean install
+```
+
+```sh
+$  mvn compile exec: java
+```
 
 
 #### Machine 4 - Client [Patient and Doctor]
 The client machine initiates requests to the server and processes encrypted responses. Its software encompasses a client-side application responsible for sending requests, decrypting received data, and providing users with an interactive experience for request processing and authentication. This introduces an abstraction and a security layer to enhance the project.
 
 To setup the machine:
+
+Navigate to the root of the project
+```sh
+$ cd a34-francisco-marta-luis
+```
+
+Access the 'setup' folder
+```sh
+$ cd setup
+```
 
 Grant permission for the .sh files to be executed
 ```sh
@@ -165,6 +238,11 @@ $ chmod +x set_client.sh
 Execute the setup file
 ```sh
 $ sudo ./set_client.sh
+```
+
+Access the 'Client' folder
+```sh
+$ cd Client
 ```
 
 Start the Client
