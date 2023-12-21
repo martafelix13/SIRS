@@ -55,8 +55,23 @@ Token (Freshness): This token acts as a safeguard against tampering and replay a
 
 #### 2.2.1. Network and Machine Setup
 
-In this project, we utilized four virtual machines, which we'll refer to as API, DB, DMZ, and Client. The API machine is connected to two internal networks, "sw-0" and "sw-1," linking to the DMZ and the API, respectively. The DB machine is connected to two internal networks, "sw-1" and "sw-3." "sw-1" connects to the API, and "sw-3" is linked to the DMZ but serves solely for bootstrap purposes. The Client machine has two networks: an internal one connecting to the DMZ to simulate access to a web server and a NAT for internet access.
-The DMZ encompasses four networks: three internal networks, "sw-0," "sw-2," and "sw-3," and a NAT that provides internet access to machines in the local network. We've designated the DMZ as the default gateway for these machines, allowing them to access the internet.
+| # Interface | Subnet | Adapter | | Adapter name | Gateway |
+|:---:|:---:|:---:|:---:|:---:|:---:|
+| __API__ ||||||
+| 1 | 192.168.0.100 | eth0 || sw-0 | 192.168.0.10 |
+| 2 | 192.168.1.100 | eth1 || sw-1 | - |
+| __DMZ__ |
+| 1 | 192.168.0.10 | eth0 || sw-0 | - | 
+| 2 | 192.168.2.10 | eth1 || sw-2 | - | 
+| 3 | 192.168.3.10 | eth2 || sw-3 | - |
+| 4 | INTERNET | eth3 || - | - |
+| __DB__: |
+| 1 | 192.168.1.101 | eth0 || sw-1 | - | 
+| 2 | 192.168.3.101 | eth1 || sw-3 | __192.168.3.10__ | 
+| __Client__: |
+| 1 | 192.168.2.11 | eth0 || sw-2 | - | 
+
+The ***DB*** machine has a ***default gateway*** only for bootstrap purposes
 
 #### 2.2.2. API Communication Security
 
