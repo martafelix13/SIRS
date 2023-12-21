@@ -61,15 +61,16 @@ The DMZ encompasses four networks: three internal networks, "sw-0," "sw-2," and 
 #### 2.2.2. API Communication Security
 
 In out case, the API needed to stablish 2 types of secure communications: with the databse and with the Client through the DMZ.
+For both types of communication the content of the messages are encrypted using the SecureDocument library.
 
 1. Secure Sockets
-The first communication refered was stablished through secure sockets.We created the certificates and the respectibe thrustores the Database has the server-side of this communication, listening for the API requests and creating a loop to process multiple requests, and the API has the client-side of this communications,stablishing connection when a query is ready to be executed in the database. 
+The first communication refered was stablished through secure sockets. We created the certificates and the respectibe thrustores the Database has the server-side of this communication, listening for the API requests and creating a loop to process multiple requests, and the API has the client-side of this communications,stablishing connection when a query is ready to be executed in the database. 
 
 For this communications we created a script "generateCertificates.sh" to allow the creation of all the certificates, clients and thrustore needed. Although this won't be needed as all the certificates and keys are already in the project documents, ready to be used.
 
-2. HTTPS For the communication between the Client and the Api we used an HTTPS secure connection through the "https://localhost:443/api" URL. To ensure that the communication was secure we also used the "generateCertificates.sh" to create the client's certificates.
+2. HTTPS
+For the communications between the Client and the API we used HTTPS connections through the "https://localhost:443/api" URL. In this case, the API has the server-side of the communication and the Client (Patient or Doctor) as the client-side, and here the communication is always started the client. To ensure that the communication was secure we also used the "generateCertificates.sh" to create the client's certificates.
 
-The comunication was allways started from the Client side and receved a response from the server
 
 ### 2.3. Security Challenge
 
