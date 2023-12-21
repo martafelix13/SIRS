@@ -218,22 +218,6 @@ $ sudo ./set_dmz.sh
 $ sudo ./set_firewall.sh
 ```
 
-Access the 'Dmz' folder
-```sh
-$ cd Dmz
-```
-
-Start the Dmz server
-
-```sh
-$ mvn clean install
-```
-
-```sh
-$  mvn compile exec: java
-```
-
-
 #### Machine 4 - Client [Patient and Doctor]
 The client machine initiates requests to the server and processes encrypted responses. Its software encompasses a client-side application responsible for sending requests, decrypting received data, and providing users with an interactive experience for request processing and authentication. This introduces an abstraction and a security layer to enhance the project.
 
