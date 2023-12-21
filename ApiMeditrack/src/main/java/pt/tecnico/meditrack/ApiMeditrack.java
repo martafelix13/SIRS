@@ -227,7 +227,7 @@ public class ApiMeditrack {
                     break;
 
                 case "allowAccessToAllRegisters":
-                    payload = JsonParser.parseString(file.get("payload").getAsString()).getAsJsonObject();
+                    payload = JsonParser.parseString(content.get("payload").getAsString()).getAsJsonObject();
                     patient = payload.get("patientName").getAsString();
                     String doctor = payload.get("doctorName").getAsString();
                     query = allowAccessToAllRegisters(patient, doctor);
@@ -235,7 +235,7 @@ public class ApiMeditrack {
                     break;
                 
                 case "deletePersonalInformation":
-                    payload = JsonParser.parseString(file.get("payload").getAsString()).getAsJsonObject();
+                    payload = JsonParser.parseString(content.get("payload").getAsString()).getAsJsonObject();
                     patient = payload.get("patientName").getAsString();
                     query = deletePersonalInformation(patient);
                     response = sendRequestToDatabase(query);
