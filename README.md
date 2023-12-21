@@ -193,13 +193,6 @@ Note: The input is case-sensitive
     - Dr.Brown
     - Dr.Lee
 
-*(replace with actual commands)*
-
-The expected results are ...
-
-If you receive the following message ... then ...
-
-*(explain how to fix some known problem)*
 
 ## Demonstration
 
