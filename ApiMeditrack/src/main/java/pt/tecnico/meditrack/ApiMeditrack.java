@@ -4,6 +4,7 @@ import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
@@ -128,7 +129,9 @@ public class ApiMeditrack {
     }
 
     private static String protectResponse(String response) {
-        JsonObject input = JsonParser.parseString(response).getAsJsonObject();
+        Gson gson = new Gson();
+        JsonObject input = gson.fromJson(response, JsonObject.class);
+        //JsonObject input = JsonParser.parseString(response).getAsJsonObject();
         PrivateKey privateKey;
         PublicKey publicKey;
         JsonObject output = new JsonObject();
@@ -334,19 +337,20 @@ public class ApiMeditrack {
             os.write(requestJson.toString().getBytes("UTF-8"));
             os.flush();
 
-            InputStream is = new BufferedInputStream(socket.getInputStream());
-            byte[] data = new byte[2048];
-            is.read(data);
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
+                // Read JSON data from the client
+                String data = reader.readLine();
+                System.out.println("Received JSON: " + data);
+        
+                return data;
 
-            String response = new String(data, StandardCharsets.UTF_8);
-
-            System.out.println("Received response: " + response);
-
-            return response;
-
+            } catch (IOException i) {
+                System.out.println(i);
+                return "error";
+            }
         } catch (IOException i) {
-            System.out.println(i);
-            return "error";
+                System.out.println(i);
+                return "error";
         }
     }
 
