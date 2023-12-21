@@ -30,6 +30,8 @@ public class Client {
 
 
     private static boolean authenticated = false;
+    private static String PatientName;
+    private static String DoctorName;
 
     public static void main(String[] args) {
         
@@ -60,27 +62,22 @@ public class Client {
                             
                         }
                         authenticated = false;
+                        PatientName = username;
                         printClientMenu();
                         int clientChoice = getUserChoice(scanner);
                         switch (clientChoice) {
                             case 1:
-                                System.out.println("Enter patient name: ");
-                                String patientName = scanner.next();
-                                sendClientViewRequest(patientName);
+                                sendClientViewRequest(PatientName);
                                 
                                 break;
                             case 2:
-                                System.out.println("Enter patient name: ");
-                                String patientName1 = scanner.next();
                                 System.out.println("Enter doctor name: ");
                                 String doctorName = scanner.next();
-                                sendClientGiveDoctorAccessRequest(patientName1, doctorName);
+                                sendClientGiveDoctorAccessRequest(PatientName, doctorName);
                                 break;
 
                             case 3:
-                                System.out.println("Enter patient name: ");
-                                String patientName2 = scanner.next();
-                                sendClientDeleteRequest(patientName2);
+                                sendClientDeleteRequest(PatientName);
                                 break;
                             case 4:
                                 System.out.println("Exiting to the main menu.");
@@ -104,19 +101,17 @@ public class Client {
                             
                         }
                         authenticated = false;
+                        DoctorName = username;
                         printDoctorMenu();
                         int doctorChoice = getUserChoice(scanner);
                         switch (doctorChoice) {
                             case 1:
-                                System.out.println("Enter doctor name: ");
-                                String doctorName = scanner.next();
                                 System.out.println("Enter patient name: ");
                                 String patientName = scanner.next();
-                                sendDoctorViewRequest(doctorName, patientName);
+                                sendDoctorViewRequest(DoctorName, patientName);
                                 break;
                             case 2:
-                                System.out.println("Enter doctor name: ");
-                                String doctorName1 = scanner.next();
+                                
                                 System.out.println("Enter patient name: ");
                                 String patientName1 = scanner.next();
                                 System.out.println("Enter date: ");
@@ -127,14 +122,13 @@ public class Client {
                                 String practice = scanner.next();
                                 System.out.println("Enter Treatment Summary: ");
                                 String treatmentSummary = scanner.next();
-                                sendDoctorCreateConsultationRequest(doctorName1, patientName1, date, speciality, practice, treatmentSummary);
+                                sendDoctorCreateConsultationRequest(DoctorName, patientName1, date, speciality, practice, treatmentSummary);
                                 break;
                             case 3:
-                                System.out.println("Enter doctor name: ");
-                                String doctorName2 = scanner.next();
+                                
                                 System.out.println("Enter new speciality: ");
                                 String newSpeciality = scanner.next();
-                                sendDoctorChangeSpecialityRequest(doctorName2, newSpeciality);
+                                sendDoctorChangeSpecialityRequest(DoctorName, newSpeciality);
                                 break;
 
                             case 4:
@@ -461,7 +455,7 @@ public class Client {
         // Create a nested JSON object for the payload
         JsonObject payload = new JsonObject();
         payload.addProperty("doctorName", doctorName);
-        payload.addProperty("newSpeciality", newSpeciality);
+        payload.addProperty("speciality", newSpeciality);
 
         // Convert the payload to a JSON string and add it to the main JSON object
         jsonPayload.addProperty("payload", payload.toString());
