@@ -45,6 +45,25 @@ Clone the base machine to create the other machines.
 4. MAC Adress Policy: Generate new MAC addresses for all network adapters
 5. Select Linked Clone
 
+### Network Table
+
+| # Interface | Subnet | Adapter | | Adapter name | Gateway |
+|:---:|:---:|:---:|:---:|:---:|:---:|
+| __API__ ||||||
+| 1 | 192.168.0.100 | eth0 || sw-0 | 192.168.0.10 |
+| 2 | 192.168.1.100 | eth1 || sw-1 | - |
+| __DMZ__ |
+| 1 | 192.168.0.10 | eth0 || sw-0 | - | 
+| 2 | 192.168.2.10 | eth1 || sw-2 | - | 
+| 3 | 192.168.3.10 | eth2 || sw-3 | - |
+| 4 | INTERNET | eth3 || - | - |
+| __DB__: |
+| 1 | 192.168.1.101 | eth0 || sw-1 | 192.168.1.1 | 
+| 2 | 192.168.3.101 | eth1 || sw-3 | __192.168.3.10__ | 
+| __Client__: |
+| 1 | 192.168.2.11 | eth0 || sw-2 | - | 
+
+The ***DB*** machine has a ***default gateway*** only for bootstrap purposes
 
 ### Machine configurations
 
