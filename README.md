@@ -58,7 +58,7 @@ Clone the base machine to create the other machines.
 | 3 | 192.168.3.10 | eth2 || sw-3 | - |
 | 4 | INTERNET | eth3 || - | - |
 | __DB__: |
-| 1 | 192.168.1.101 | eth0 || sw-1 | 192.168.1.1 | 
+| 1 | 192.168.1.101 | eth0 || sw-1 | - | 
 | 2 | 192.168.3.101 | eth1 || sw-3 | __192.168.3.10__ | 
 | __Client__: |
 | 1 | 192.168.2.11 | eth0 || sw-2 | - | 
