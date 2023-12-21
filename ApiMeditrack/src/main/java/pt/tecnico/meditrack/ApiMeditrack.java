@@ -59,7 +59,7 @@ public class ApiMeditrack {
     private final static int PORT = 3306;
     private final static int PORT_HTTPS = 443;
 
-    private final static String ADDRESS = "localhost";
+    private final static String ADDRESS = "192.168.1.101";
 
     private final static String PATIENT = "patient";
     private final static String DOCTOR = "doctor";
