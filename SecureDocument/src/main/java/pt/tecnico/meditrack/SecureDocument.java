@@ -72,16 +72,16 @@ public class SecureDocument {
 	private static Key generateSecretKey(String keyPath) throws GeneralSecurityException, IOException {
 
 		// get an AES private key
-		System.out.println("Generating AES key ...");
+		//System.out.println("Generating AES key ...");
 		KeyGenerator keyGen = KeyGenerator.getInstance("AES");
 		keyGen.init(256);
 		Key key = keyGen.generateKey();
-		System.out.println("Finish generating AES key");
+		//System.out.println("Finish generating AES key");
 		byte[] encoded = key.getEncoded();
-		System.out.println("Key:");
-		System.out.println(printHexBinary(encoded));
+		//System.out.println("Key:");
+		//System.out.println(printHexBinary(encoded));
 
-		System.out.println("Writing key to '" + keyPath + "' ...");
+		//System.out.println("Writing key to '" + keyPath + "' ...");
 
 		FileOutputStream fos = new FileOutputStream(keyPath);
 		fos.write(encoded);
@@ -117,7 +117,7 @@ public class SecureDocument {
         try {
             Path path = Paths.get(filePath);
             Files.delete(path);
-            System.out.println("File deleted successfully.");
+            //System.out.println("File deleted successfully.");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -324,7 +324,7 @@ public class SecureDocument {
 
 		// Make digital signature
 		byte[] digitalSignatureBytes = makeDigitalSignature(jsonBytes, privateKey);
-		System.out.println("Original Signature size: " + digitalSignatureBytes.length + " bytes");
+		//System.out.println("Original Signature size: " + digitalSignatureBytes.length + " bytes");
 		String digitalSignatureCipher_b64 = Base64.getEncoder().encodeToString(digitalSignatureBytes);
 
 		document.addProperty("digital-signature", digitalSignatureCipher_b64);
@@ -421,17 +421,17 @@ public class SecureDocument {
 		// Get private key
 		PublicKey publicKey = readPublicKey(public_key);
 	
-		System.out.println("Verifying Signature...");
+		//System.out.println("Verifying Signature...");
 		// Verify digital signature
 		boolean resultSignature = verifyDigitalSignature(signatureBytesCipher, contentBytes, publicKey);
-		System.out.println("Signature is " + (resultSignature ? "right" : "wrong"));
+		//System.out.println("Signature is " + (resultSignature ? "right" : "wrong"));
 	
-		System.out.println("Verifying Freshness token...");
+		//System.out.println("Verifying Freshness token...");
 		// Verify freshness token
 		boolean resultFreshnessToken = verifyFreshnessToken(freshnessToken, temporalLimitSeconds);
-		System.out.println("Freshness token is " + (resultFreshnessToken ? "right" : "wrong"));
+		//System.out.println("Freshness token is " + (resultFreshnessToken ? "right" : "wrong"));
 	
-		System.out.println("Result: " + (resultSignature && resultFreshnessToken ? "VALID" : "INVALID"));
+		//System.out.println("Result: " + (resultSignature && resultFreshnessToken ? "VALID" : "INVALID"));
 
 		return resultSignature && resultFreshnessToken;
 	}
@@ -449,7 +449,7 @@ public class SecureDocument {
 	public static void main(String args[]) throws Exception {
 		// command <input_filename> <output_filename>
 		if (args.length < 1) {
-			System.out.println("Please provide a command.");
+			//System.out.println("Please provide a command.");
 			return;
 		}
 	
