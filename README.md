@@ -298,7 +298,7 @@ $ mvn compile exec: java
 
 4- Enter the name of your Client and the authentication process begins:
 
- -4.1 The Api send the Client and encrypted challage, with the Client's Public Key
+ -4.1 The Api send the Client and encrypted challenge, with the Client's Public Key
     
 ![image](https://github.com/tecnico-sec/a34-francisco-marta-luis/assets/15965849/0160c23d-dc42-4fda-a77b-f0600b900ba3)
 
@@ -315,7 +315,7 @@ $ mvn compile exec: java
 
 ![image](https://github.com/tecnico-sec/a34-francisco-marta-luis/assets/15965849/759cec12-67b9-4db2-ac96-7ad78fff1771)
 
-6- All the communications are protected and unprotect using the Secure Docuemnts Library
+6- All the communications are protected and unprotected using the Secure Documents Library
 
 ![image](https://github.com/tecnico-sec/a34-francisco-marta-luis/assets/15965849/4875be41-79f2-45cb-b28c-8f8de133265a)
 
