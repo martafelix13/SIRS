@@ -125,8 +125,12 @@ $ sudo ./set_db.sh meditrack.sql
 $ sudo ./set_firewall.sh
 ```
 
-Start the Database (root)
+Copy the database to the source (root)
+```sh
+$ cp setup/meditrack.db src/main/java/pt/tecnico/meditrack/
+```
 
+Start the Database (root)
 ```sh
 $ mvn clean install
 ```
