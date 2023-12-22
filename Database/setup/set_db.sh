@@ -34,7 +34,7 @@ sleep 1
 sudo apt install maven -y
 sleep 1
 
-sudo route del defaul
+sudo route del default
 
 # Restart the NetworkManager service
 echo "Restarting NetworkManager service"

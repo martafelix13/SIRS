@@ -28,24 +28,6 @@ sleep 1
 sudo apt install maven -y
 sleep 1
 
-sysctl net.ipv4.ip_forward=1
-
-sysctl net.ipv4.conf.all.forwarding
-
-sudo iptables -F
-
-iptables -P FORWARD ACCEPT
-
-iptables -F FORWARD 
-
-iptables -t nat -F  
-                                                                                            
-iptables -t nat -A POSTROUTING  -o eth3 -j MASQUERADE
-
-#iptables -A PREROUTING -t nat -p icmp --icmp-type echo-request -j DNAT --to-destination 192.168.0.100
-
-iptables -A PREROUTING -t nat -p tcp --dport 443 -j DNAT --to-destination 192.168.0.100
-
 # Restart the NetworkManager service
 echo "Restarting NetworkManager service"
 sudo systemctl restart NetworkManager
